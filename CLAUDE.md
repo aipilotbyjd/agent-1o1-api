@@ -11,6 +11,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 
 - php - 8.4
 - laravel/framework (LARAVEL) - v13
+- laravel/passport (PASSPORT) - v13
 - laravel/prompts (PROMPTS) - v0
 - laravel/pulse (PULSE) - v1
 - livewire/livewire (LIVEWIRE) - v4
