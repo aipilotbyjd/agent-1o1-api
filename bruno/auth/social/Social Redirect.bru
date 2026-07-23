@@ -1,0 +1,32 @@
+meta {
+  name: Social Redirect
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/social/:provider/redirect
+  body: none
+  auth: none
+}
+
+params:path {
+  provider: google
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Returns the provider's OAuth authorize URL. A real frontend does
+  window.location.href = data.url; Bruno can't complete the actual provider login/consent
+  redirect, so this is best tested by opening the returned URL in a browser rather than
+  clicking "Send" and expecting a full flow here.
+
+  Supported providers: google, github (config/services.php). Change the :provider path
+  param to switch.
+
+  Expected result:
+  - 200 with { url: "https://accounts.google.com/..." } (or https://github.com/login/... for github).
+}

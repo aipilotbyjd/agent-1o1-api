@@ -1,0 +1,22 @@
+meta {
+  name: Logout All
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/logout-all
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Revokes every active token for the authenticated user (all devices).
+
+  Expected result:
+  - 200 on success.
+}

@@ -1,0 +1,45 @@
+meta {
+  name: Social Callback
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/social/:provider/callback
+  body: json
+  auth: none
+}
+
+params:path {
+  provider: google
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "code": "paste-code-from-provider-redirect"
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.access_token) {
+    bru.setVar("token", res.body.data.access_token);
+  }
+}
+
+docs {
+  Exchanges the provider's authorization code for a session. Requires a real `code` from
+  completing "Social Redirect" in an actual browser first — the code is single-use and
+  short-lived, so this can't be tested standalone without that manual step.
+
+  Supported providers: google, github (config/services.php). Change the :provider path
+  param to switch.
+
+  Expected result:
+  - 200 with access_token and user. No refresh_token — issued as a personal access token
+    since there's no password to run through the password grant (see
+    AuthService::handleSocialCallback). Re-authenticate via the provider once it expires.
+}

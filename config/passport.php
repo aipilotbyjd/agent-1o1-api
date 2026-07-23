@@ -45,4 +45,20 @@ return [
 
     'connection' => env('PASSPORT_CONNECTION'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Password Grant Client
+    |--------------------------------------------------------------------------
+    |
+    | Passport hashes client secrets at rest, so the plaintext secret shown
+    | once at `passport:client --password` creation time can't be recovered
+    | from the database afterward. Store it here so AuthService can perform
+    | the internal password-grant token exchange.
+    |
+    */
+
+    'password_client_id' => env('PASSPORT_PASSWORD_CLIENT_ID'),
+
+    'password_client_secret' => env('PASSPORT_PASSWORD_CLIENT_SECRET'),
+
 ];

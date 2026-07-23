@@ -16,7 +16,9 @@
         "laravel/passport": "^13.0",
         "laravel/pulse": "^1.7",
         "laravel/reverb": "^1.0",
+        "laravel/socialite": "^5.29",
         "laravel/tinker": "^3.0",
+        "pragmarx/google2fa": "^9.0",
         "predis/predis": "^3.5"
     },
     "require-dev": {

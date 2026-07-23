@@ -1,0 +1,22 @@
+meta {
+  name: Regenerate Recovery Codes
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/2fa/recovery-codes/regenerate
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Invalidates existing recovery codes and generates 8 new ones.
+
+  Expected result:
+  - 200 with the new plaintext recovery_codes — shown only once.
+}

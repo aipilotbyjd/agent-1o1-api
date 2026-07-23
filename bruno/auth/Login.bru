@@ -1,0 +1,40 @@
+meta {
+  name: Login
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "email": "ada@example.com",
+    "password": "Password123!"
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.access_token) {
+    bru.setVar("token", res.body.data.access_token);
+  }
+  if (res.body?.data?.refresh_token) {
+    bru.setVar("refreshToken", res.body.data.refresh_token);
+  }
+}
+
+docs {
+  Logs in with email + password via the Passport password grant.
+  
+  Expected result:
+  - 200 with access_token, refresh_token, expires_in, and user.
+  - 200 with a two_factor_challenge instead of tokens if 2FA is enabled — see "Verify Two Factor".
+  - 422 on invalid credentials.
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Update User
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/api/v1/auth/user
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Ada Byron"
+  }
+}
+
+docs {
+  Updates the authenticated user's name and/or email. Changing the email resets
+  email_verified_at to null and sends a new verification email.
+
+  Expected result:
+  - 200 with the updated user.
+  - 422 on validation errors (e.g. email already taken).
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Ada Lovelace",
+    "email": "ada@example.com",
+    "password": "Password123!",
+    "password_confirmation": "Password123!"
+  }
+}
+
+docs {
+  Registers a new user and sends an email verification link.
+  
+  Expected result:
+  - 201 with the created user.
+  - 422 on validation errors (duplicate email, weak password, etc).
+}

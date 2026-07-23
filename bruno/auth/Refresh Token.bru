@@ -1,0 +1,41 @@
+meta {
+  name: Refresh Token
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "refresh_token": "{{refreshToken}}"
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.access_token) {
+    bru.setVar("token", res.body.data.access_token);
+  }
+  if (res.body?.data?.refresh_token) {
+    bru.setVar("refreshToken", res.body.data.refresh_token);
+  }
+}
+
+docs {
+  Exchanges a refresh token for a new access/refresh token pair.
+
+  Required variables:
+  - refreshToken (set automatically by "Login")
+
+  Expected result:
+  - 200 with a new token pair.
+  - 422 if the refresh token is invalid or expired.
+}

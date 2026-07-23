@@ -1,0 +1,51 @@
+meta {
+  name: Verify Two Factor
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/2fa/verify
+  body: json
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "challenge_token": "{{challengeToken}}",
+    "code": "123456"
+  }
+}
+
+vars:pre-request {
+  challengeToken: 41OT4wu4VldOv7ITAqUnpFJJxhHrNLTKcVRtrjMapPHHIIFhCopXn6XqYSNNfUPU
+}
+
+script:post-response {
+  if (res.body?.data?.access_token) {
+    bru.setVar("token", res.body.data.access_token);
+  }
+  if (res.body?.data?.refresh_token) {
+    bru.setVar("refreshToken", res.body.data.refresh_token);
+  }
+}
+
+docs {
+  Completes login when "Login" returned a two_factor_challenge instead of tokens. Accepts
+  either a TOTP code or an unused recovery code.
+
+  Required variables:
+  - challengeToken (copy from the "Login" response's data.challenge_token — not
+    auto-captured, since it's only present on the 2FA branch)
+
+  Expected result:
+  - 200 with the same shape as a normal login: access_token, refresh_token, expires_in,
+    user. The password is held encrypted alongside the challenge token for this single
+    exchange (5 min TTL, deleted immediately after use) specifically so this step can run
+    the real password grant instead of a refresh-token-less fallback.
+  - 422 if the challenge token has expired, was already used, or the code is invalid.
+}

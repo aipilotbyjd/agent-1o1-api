@@ -20,6 +20,7 @@
         "configuring-horizon",
         "passport-development",
         "pulse-development",
+        "socialite-development",
         "pest-testing",
         "echo-development",
         "tailwindcss-development"
