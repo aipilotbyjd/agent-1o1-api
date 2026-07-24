@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,4 +48,9 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function authHeader(User $user): string
+{
+    return $user->createToken('test')->accessToken;
 }

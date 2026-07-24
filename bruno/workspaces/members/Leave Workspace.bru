@@ -1,0 +1,27 @@
+meta {
+  name: Leave Workspace
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/members/leave
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Removes the authenticated user's own membership from the workspace.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the authenticated user is the workspace owner (must transfer ownership first).
+}

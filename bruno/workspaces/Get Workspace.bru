@@ -1,0 +1,27 @@
+meta {
+  name: Get Workspace
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single workspace by id.
+
+  Expected result:
+  - 200 with the workspace.
+  - 404 if the workspace doesn't exist.
+}

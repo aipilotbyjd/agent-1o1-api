@@ -1,0 +1,32 @@
+meta {
+  name: Create Workspace
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces
+  body: json
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Acme Inc",
+    "slug": "acme-inc"
+  }
+}
+
+docs {
+  Creates a workspace. The `slug` is optional — a unique slug is auto-generated from `name`
+  when omitted. The creator is automatically added as the workspace's `owner` member.
+
+  Expected result:
+  - 201 with the created workspace.
+  - 422 on validation errors (e.g. slug already taken).
+  - 403 if the user's email is not verified.
+}

@@ -1,0 +1,39 @@
+meta {
+  name: Accept Invitation
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/invitations/:token/accept?signature=ac869405886697144acd36247662e72543ef84d7953e4df3d7b78edee5b92787&expires=1785517966
+  body: none
+  auth: inherit
+}
+
+params:query {
+  signature: ac869405886697144acd36247662e72543ef84d7953e4df3d7b78edee5b92787
+  expires: 1785517966
+}
+
+params:path {
+  token: crKcDiBA49xgqodusIbJJDFiN0i8hMgTXObVrvV3
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Accepts a pending workspace invitation. This is a signed URL (like "Verify Email") sent
+  to the invitee's email via "Invite Member" — the full URL (with a valid `signature` and
+  `expires` query param) comes from that email or the `workspace_invitations.token` column
+  in the DB. Paste the real URL into the Bruno URL bar directly rather than filling in the
+  path/query params by hand, since the signature won't validate otherwise. The authenticated
+  user's email must match the invitation's `email`.
+  
+  Expected result:
+  - 200 with the created workspace_member.
+  - 403 if the link is tampered with or expired (signature check).
+  - 422 if the invitation itself is expired, already accepted, or the email doesn't match
+    the authenticated user.
+}

@@ -1,0 +1,26 @@
+meta {
+  name: List Members
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/members
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists all members of a workspace.
+
+  Expected result:
+  - 200 with a data array of members (id, role, joined_at, user, created_at).
+}

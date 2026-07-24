@@ -1,0 +1,36 @@
+meta {
+  name: Update Workspace
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Acme Incorporated",
+    "slug": "acme-incorporated"
+  }
+}
+
+docs {
+  Updates a workspace's name and/or slug. Requires the authenticated user to be the
+  workspace's `owner` or `admin`.
+
+  Expected result:
+  - 200 with the updated workspace.
+  - 403 if the user is a regular `member` (or not a member at all).
+  - 422 on validation errors.
+}

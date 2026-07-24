@@ -1,0 +1,24 @@
+meta {
+  name: List Workspaces
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists workspaces the authenticated user belongs to (any role).
+
+  Expected result:
+  - 200 with a data array of workspaces (id, name, slug, avatar_url, owner, timestamps).
+  - 401 if unauthenticated.
+  - 403 if the user's email is not verified.
+}

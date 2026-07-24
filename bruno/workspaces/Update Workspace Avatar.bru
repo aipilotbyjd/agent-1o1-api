@@ -1,0 +1,34 @@
+meta {
+  name: Update Workspace Avatar
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/avatar
+  body: multipartForm
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:multipart-form {
+  avatar: @file(/Users/jaydeep/Downloads/modern-male-avatar-with-black-hair-and-hoodie-illustration-free-png.webp) @contentType(image/webp)
+}
+
+docs {
+  Uploads (or replaces) the workspace's avatar image. Requires the authenticated user to
+  be the workspace's `owner` or `admin`. Replace the `avatar` file path with a real image
+  file on disk before sending — Bruno can't resolve a relative path.
+  
+  Expected result:
+  - 200 with the updated workspace (avatar_url populated).
+  - 422 if the file is missing, not an image, or exceeds 2MB.
+  - 403 if the user is a regular `member`.
+}

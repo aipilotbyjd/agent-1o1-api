@@ -1,0 +1,31 @@
+meta {
+  name: Remove Member
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/members/:member
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  member: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Removes a member from the workspace. Requires the authenticated user to be the
+  workspace's `owner` or `admin`. The workspace owner can never be removed this way.
+
+  Expected result:
+  - 200 on success.
+  - 422 if targeting the workspace owner's membership.
+  - 403 if the authenticated user is a regular `member`.
+  - 404 if the member doesn't belong to this workspace.
+}

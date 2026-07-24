@@ -1,0 +1,28 @@
+meta {
+  name: List Pending Invitations
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/invitations
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists pending (not yet accepted, not expired) invitations for a workspace. Requires the
+  authenticated user to be the workspace's `owner` or `admin`.
+
+  Expected result:
+  - 200 with a data array of invitations (id, email, role, expires_at, created_at).
+  - 403 if the authenticated user is a regular `member`.
+}

@@ -23,7 +23,9 @@ use App\Http\Controllers\Api\V1\Auth\User\DeleteUserController;
 use App\Http\Controllers\Api\V1\Auth\User\ShowUserController;
 use App\Http\Controllers\Api\V1\Auth\User\UpdateUserController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
-use App\Http\Controllers\Api\V1\Workflows\IndexWorkflowController;
+use App\Http\Controllers\Api\V1\Workspaces\AcceptInvitationController;
+use App\Http\Controllers\Api\V1\Workspaces\WorkspaceController;
+use App\Http\Controllers\Api\V1\Workspaces\WorkspaceMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->as('v1.')->group(function (): void {
@@ -78,6 +80,26 @@ Route::prefix('v1')->as('v1.')->group(function (): void {
     });
 
     Route::middleware(['auth:api', 'verified'])->group(function (): void {
-        Route::get('workflows', IndexWorkflowController::class)->name('workflows.index');
+        Route::get('workspaces/invitations/{token}/accept', AcceptInvitationController::class)
+            ->middleware('signed')
+            ->name('workspaces.invitations.accept');
+
+        Route::prefix('workspaces')->as('workspaces.')->group(function (): void {
+            Route::get('/', [WorkspaceController::class, 'index'])->name('index');
+            Route::post('/', [WorkspaceController::class, 'store'])->name('store');
+            Route::get('{workspace}', [WorkspaceController::class, 'show'])->name('show');
+            Route::put('{workspace}', [WorkspaceController::class, 'update'])->name('update');
+            Route::delete('{workspace}', [WorkspaceController::class, 'destroy'])->name('destroy');
+            Route::post('{workspace}/avatar', [WorkspaceController::class, 'updateAvatar'])->name('avatar.update');
+            Route::get('{workspace}/invitations', [WorkspaceMemberController::class, 'invitations'])->name('invitations.index');
+
+            Route::prefix('{workspace}/members')->as('members.')->group(function (): void {
+                Route::get('/', [WorkspaceMemberController::class, 'index'])->name('index');
+                Route::post('invite', [WorkspaceMemberController::class, 'invite'])->name('invite');
+                Route::delete('leave', [WorkspaceMemberController::class, 'leave'])->name('leave');
+                Route::patch('{member}', [WorkspaceMemberController::class, 'updateRole'])->name('update-role');
+                Route::delete('{member}', [WorkspaceMemberController::class, 'destroy'])->name('destroy');
+            });
+        });
     });
 });
