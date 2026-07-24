@@ -23,6 +23,9 @@ use App\Http\Controllers\Api\V1\Auth\User\DeleteUserController;
 use App\Http\Controllers\Api\V1\Auth\User\ShowUserController;
 use App\Http\Controllers\Api\V1\Auth\User\UpdateUserController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
+use App\Http\Controllers\Api\V1\NotificationChannelController;
+use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\NotificationPreferenceController;
 use App\Http\Controllers\Api\V1\Workspaces\AcceptInvitationController;
 use App\Http\Controllers\Api\V1\Workspaces\WorkspaceController;
 use App\Http\Controllers\Api\V1\Workspaces\WorkspaceMemberController;
@@ -100,6 +103,27 @@ Route::prefix('v1')->as('v1.')->group(function (): void {
                 Route::patch('{member}', [WorkspaceMemberController::class, 'updateRole'])->name('update-role');
                 Route::delete('{member}', [WorkspaceMemberController::class, 'destroy'])->name('destroy');
             });
+
+            Route::prefix('{workspace}/notification-channels')->as('notification-channels.')->group(function (): void {
+                Route::get('/', [NotificationChannelController::class, 'index'])->name('index');
+                Route::post('/', [NotificationChannelController::class, 'store'])->name('store');
+                Route::put('{notificationChannel}', [NotificationChannelController::class, 'update'])->name('update');
+                Route::delete('{notificationChannel}', [NotificationChannelController::class, 'destroy'])->name('destroy');
+                Route::post('{notificationChannel}/test', [NotificationChannelController::class, 'test'])->name('test');
+            });
+
+            Route::prefix('{workspace}/notification-preferences')->as('notification-preferences.')->group(function (): void {
+                Route::get('/', [NotificationPreferenceController::class, 'index'])->name('index');
+                Route::put('/', [NotificationPreferenceController::class, 'upsert'])->name('upsert');
+            });
+        });
+
+        Route::prefix('notifications')->as('notifications.')->group(function (): void {
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+            Route::post('mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
+            Route::post('{notification}/read', [NotificationController::class, 'markRead'])->name('read');
+            Route::delete('{notification}', [NotificationController::class, 'destroy'])->name('destroy');
         });
     });
 });

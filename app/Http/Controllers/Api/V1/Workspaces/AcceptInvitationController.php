@@ -6,13 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\V1\WorkspaceMemberResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\WorkspaceInvitation;
+use App\Notifications\Workspace\MemberJoinedNotification;
+use App\Services\NotificationDispatcher;
 use App\Services\WorkspaceInvitationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class AcceptInvitationController extends Controller
 {
-    public function __construct(private readonly WorkspaceInvitationService $invitationService) {}
+    public function __construct(
+        private readonly WorkspaceInvitationService $invitationService,
+        private readonly NotificationDispatcher $notifications,
+    ) {}
 
     /**
      * Handle the incoming request.
@@ -22,7 +27,13 @@ class AcceptInvitationController extends Controller
         $invitation = WorkspaceInvitation::where('token', $token)->firstOrFail();
 
         $member = $this->invitationService->accept($invitation, $request->user());
+        $member->load('user');
 
-        return ApiResponse::success(new WorkspaceMemberResource($member->load('user')), 'Invitation accepted successfully');
+        $this->notifications->dispatch(
+            $this->notifications->ownersAndAdmins($invitation->workspace, except: $member->user),
+            new MemberJoinedNotification($invitation->workspace, $member),
+        );
+
+        return ApiResponse::success(new WorkspaceMemberResource($member), 'Invitation accepted successfully');
     }
 }

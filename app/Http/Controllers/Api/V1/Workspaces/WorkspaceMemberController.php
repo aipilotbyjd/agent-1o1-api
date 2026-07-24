@@ -10,6 +10,10 @@ use App\Http\Resources\V1\WorkspaceMemberResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Workspace;
 use App\Models\WorkspaceMember;
+use App\Notifications\Workspace\MemberInvitedNotification;
+use App\Notifications\Workspace\MemberRemovedNotification;
+use App\Notifications\Workspace\MemberRoleChangedNotification;
+use App\Services\NotificationDispatcher;
 use App\Services\WorkspaceInvitationService;
 use App\Services\WorkspaceService;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +24,7 @@ class WorkspaceMemberController extends Controller
     public function __construct(
         private readonly WorkspaceService $workspaceService,
         private readonly WorkspaceInvitationService $invitationService,
+        private readonly NotificationDispatcher $notifications,
     ) {}
 
     public function index(Workspace $workspace): JsonResponse
@@ -31,11 +36,18 @@ class WorkspaceMemberController extends Controller
 
     public function invite(InviteWorkspaceMemberRequest $request, Workspace $workspace): JsonResponse
     {
+        $inviter = $request->user();
+
         $invitation = $this->invitationService->invite(
             $workspace,
-            $request->user(),
+            $inviter,
             $request->string('email')->value(),
             $request->string('role')->value(),
+        );
+
+        $this->notifications->dispatch(
+            $this->notifications->ownersAndAdmins($workspace, except: $inviter),
+            new MemberInvitedNotification($workspace, $invitation, $inviter),
         );
 
         return ApiResponse::created(['email' => $invitation->email, 'role' => $invitation->role], 'Invitation sent successfully');
@@ -45,9 +57,17 @@ class WorkspaceMemberController extends Controller
     {
         $this->ensureMemberBelongsToWorkspace($workspace, $member);
 
+        $previousRole = $member->role;
+        $actor = $request->user();
+
         $member = $this->workspaceService->updateMemberRole($member, $request->string('role')->value());
 
-        return ApiResponse::success(new WorkspaceMemberResource($member->load('user')), 'Member role updated successfully');
+        $this->notifications->dispatch(
+            $this->notifications->ownersAndAdmins($workspace, except: $actor),
+            new MemberRoleChangedNotification($workspace, $member->load('user'), $previousRole),
+        );
+
+        return ApiResponse::success(new WorkspaceMemberResource($member), 'Member role updated successfully');
     }
 
     public function destroy(Request $request, Workspace $workspace, WorkspaceMember $member): JsonResponse
@@ -58,7 +78,15 @@ class WorkspaceMemberController extends Controller
             return ApiResponse::forbidden();
         }
 
+        $actor = $request->user();
+        $removedUser = $member->load('user')->user;
+
         $this->workspaceService->removeMember($member);
+
+        $this->notifications->dispatch(
+            $this->notifications->ownersAndAdmins($workspace, except: $actor),
+            new MemberRemovedNotification($workspace, $removedUser),
+        );
 
         return ApiResponse::success(null, 'Member removed successfully');
     }

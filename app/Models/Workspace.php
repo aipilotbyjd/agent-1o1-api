@@ -50,4 +50,20 @@ class Workspace extends Model
     {
         return $this->hasMany(WorkspaceInvitation::class);
     }
+
+    /**
+     * @return HasMany<NotificationChannel, $this>
+     */
+    public function notificationChannels(): HasMany
+    {
+        return $this->hasMany(NotificationChannel::class);
+    }
+
+    /**
+     * @return HasMany<NotificationPreference, $this>
+     */
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
 }
