@@ -66,4 +66,36 @@ class Workspace extends Model
     {
         return $this->hasMany(NotificationPreference::class);
     }
+
+    /**
+     * @return HasMany<Agent, $this>
+     */
+    public function agents(): HasMany
+    {
+        return $this->hasMany(Agent::class);
+    }
+
+    /**
+     * @return HasMany<Tool, $this>
+     */
+    public function tools(): HasMany
+    {
+        return $this->hasMany(Tool::class);
+    }
+
+    /**
+     * @return HasMany<Workflow, $this>
+     */
+    public function workflows(): HasMany
+    {
+        return $this->hasMany(Workflow::class);
+    }
+
+    /**
+     * @return HasMany<Run, $this>
+     */
+    public function runs(): HasMany
+    {
+        return $this->hasMany(Run::class);
+    }
 }
