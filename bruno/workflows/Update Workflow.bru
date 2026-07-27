@@ -1,0 +1,38 @@
+meta {
+  name: Update Workflow
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Lead Enrichment (v2)",
+    "description": "Enriches inbound leads, dedupes against CRM, and routes to sales."
+  }
+}
+
+docs {
+  Updates a workflow's `name` and/or `description`. Does not touch the graph — see
+  "Save Workflow Graph" for steps/edges. Requires the `workflow.manage` permission.
+
+  Expected result:
+  - 200 with the updated workflow.
+  - 422 on validation errors.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

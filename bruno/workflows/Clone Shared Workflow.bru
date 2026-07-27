@@ -1,0 +1,35 @@
+meta {
+  name: Clone Shared Workflow
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/shared-workflows/:token/clone
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  token: example-token
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Clones a shared workflow's published graph into the workspace in the URL (which may
+  differ from the workspace that created the share). `token` is the share's token —
+  see "Create Workflow Share". The share must not be expired and must allow cloning
+  (`allow_clone`). Requires the `workflow.clone-shared` permission on the target
+  workspace.
+
+  Expected result:
+  - 201 with the newly created workflow (named "<source> (Copy)").
+  - 403 if the share doesn't allow cloning, or the user lacks the
+    `workflow.clone-shared` permission.
+  - 404 if no share exists for this token.
+  - 410 if the share link has expired.
+}

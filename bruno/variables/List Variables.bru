@@ -1,0 +1,29 @@
+meta {
+  name: List Variables
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/variables
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists all variables in the workspace, ordered by key. There is no single-resource
+  show route — variables are only fetched via this index. Requires the
+  `variable.view` permission.
+
+  Expected result:
+  - 200 with the list of variables.
+  - 403 if the user lacks the `variable.view` permission.
+}

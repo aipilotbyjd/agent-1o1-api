@@ -1,0 +1,50 @@
+meta {
+  name: Create Workflow Trigger
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/triggers
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "schedule",
+    "config": {
+      "cron": "0 * * * *"
+    },
+    "is_active": true
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("triggerId", res.body.data.id);
+  }
+}
+
+docs {
+  Creates a trigger for the workflow. Either `type` (`webhook`, `schedule`, `manual`,
+  or `polling`) or `trigger_type_key` (a key from the trigger type catalog) is
+  required. A `schedule` trigger requires a valid `config.cron` expression; a
+  `webhook` trigger may require `signing_secret` depending on the trigger type's
+  signature scheme. Requires the `trigger.manage` permission.
+
+  Expected result:
+  - 201 with the created trigger.
+  - 422 on validation errors (e.g. invalid cron expression, missing required config field).
+  - 403 if the user lacks the `trigger.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

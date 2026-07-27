@@ -1,0 +1,41 @@
+meta {
+  name: Create Document Embedding
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/document-embeddings
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "collection": "docs",
+    "source": "onboarding-guide.md",
+    "chunk_text": "This is an example chunk of document text to embed.",
+    "metadata": {
+      "page": 1
+    }
+  }
+}
+
+docs {
+  Creates a document embedding. `chunk_text` is required and is sent to the embeddings
+  provider to generate the vector; the resulting embedding is stored alongside the chunk.
+  Requires the `document-embedding.manage` permission.
+
+  Expected result:
+  - 201 with the created document embedding.
+  - 422 on validation errors (e.g. missing `chunk_text`).
+  - 403 if the authenticated user lacks the `document-embedding.manage` permission.
+}

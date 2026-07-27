@@ -1,0 +1,30 @@
+meta {
+  name: Get Workspace Usage
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/usage
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Returns AI token usage for the workspace, aggregated into totals, usage by runnable
+  (agent/workflow), and usage by day. Accepts optional `from` and `to` date query
+  parameters to scope the range. Requires the `workspace.usage.view` permission.
+
+  Expected result:
+  - 200 with { totals, by_runnable, by_day }.
+  - 403 if the authenticated user lacks the `workspace.usage.view` permission.
+  - 422 if `to` is before `from`.
+}

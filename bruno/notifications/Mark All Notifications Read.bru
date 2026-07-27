@@ -1,0 +1,23 @@
+meta {
+  name: Mark All Notifications Read
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/notifications/mark-all-read
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Marks all of the authenticated user's unread notifications as read. Not
+  workspace-scoped.
+
+  Expected result:
+  - 200 on success.
+}

@@ -1,0 +1,40 @@
+meta {
+  name: Test Tool
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/tools/:tool/test
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  tool: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "arguments": {
+      "city": "London"
+    }
+  }
+}
+
+docs {
+  Executes the tool immediately with the given `arguments`, using the tool's
+  configured handler (e.g. the HTTP handler for `type: http` tools). Requires the
+  `tool.manage` permission.
+
+  Expected result:
+  - 200 with { result: ... } on successful execution.
+  - 200 with an error message if execution fails (the request itself doesn't fail).
+  - 403 if the user lacks the `tool.manage` permission.
+  - 404 if the tool doesn't belong to this workspace.
+}

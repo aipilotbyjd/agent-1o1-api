@@ -1,0 +1,54 @@
+meta {
+  name: Create Tool
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/tools
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Get Weather",
+    "description": "Fetches current weather for a city.",
+    "type": "http",
+    "config": {
+      "url": "https://api.example.com/weather",
+      "method": "GET",
+      "headers": {
+        "Accept": "application/json"
+      },
+      "timeout": 10,
+      "parameters": [
+        {
+          "name": "city",
+          "type": "string",
+          "description": "City name",
+          "required": true
+        }
+      ]
+    },
+    "is_active": true
+  }
+}
+
+docs {
+  Creates a tool in the workspace. `type` currently only supports `http`. The `slug`
+  is auto-generated from `name`. Requires the `tool.manage` permission.
+
+  Expected result:
+  - 201 with the created tool.
+  - 422 on validation errors (e.g. missing `config.url` for an `http` tool).
+  - 403 if the user lacks the `tool.manage` permission.
+}

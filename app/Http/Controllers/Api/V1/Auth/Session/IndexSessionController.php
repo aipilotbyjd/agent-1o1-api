@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Auth\Session;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\SessionResource;
+use App\Http\Resources\V1\Auth\SessionResource;
 use App\Http\Responses\ApiResponse;
-use App\Services\AuthService;
+use App\Services\Auth\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

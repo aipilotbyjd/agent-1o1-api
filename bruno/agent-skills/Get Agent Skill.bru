@@ -1,0 +1,29 @@
+meta {
+  name: Get Agent Skill
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills/:skill
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  skill: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Retrieves a single agent skill. Requires the `agent-skill.view` permission.
+
+  Expected result:
+  - 200 with the skill.
+  - 403 if the user lacks the `agent-skill.view` permission.
+  - 404 if the skill doesn't belong to this workspace.
+}

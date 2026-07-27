@@ -1,0 +1,30 @@
+meta {
+  name: Get Node
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/nodes/:node
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  node: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single node by id — either a builtin catalog node or one belonging to this
+  workspace. Requires the `node.view` permission.
+
+  Expected result:
+  - 200 with the node.
+  - 403 if the user lacks the `node.view` permission.
+  - 404 if the node belongs to a different workspace.
+}

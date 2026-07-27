@@ -3,7 +3,7 @@
 namespace App\Notifications\Workspace;
 
 use App\Models\User;
-use App\Models\Workspace;
+use App\Models\Workspaces\Workspace;
 
 class MemberRemovedNotification extends WorkspaceEventNotification
 {

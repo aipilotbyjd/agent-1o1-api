@@ -1,0 +1,42 @@
+meta {
+  name: Trigger Workflow
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/trigger
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "input": {
+      "lead_email": "lead@example.com"
+    }
+  }
+}
+
+docs {
+  Starts a run of a published workflow. `input` is optional arbitrary data passed into
+  the run. `environment_id` is optional (defaults to the workspace's default
+  environment) and must belong to this workspace if provided. Requires the
+  `workflow.trigger` permission. The workflow must be `published`.
+
+  Expected result:
+  - 201 with the created run, including its `steps`.
+  - 200-shaped error (`ApiResponse::error`) if the workflow isn't published.
+  - 422 if `environment_id` doesn't exist.
+  - 403 if the user lacks the `workflow.trigger` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

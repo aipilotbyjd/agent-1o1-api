@@ -1,0 +1,31 @@
+meta {
+  name: Delete Workflow Builder Session
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflow-builder-sessions/:session
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  session: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a workflow builder session. A regular member may only delete their own
+  sessions; owner/admin (with `workflow.manage`) may delete any session in the
+  workspace.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the session belongs to another user and the caller lacks `workflow.manage`.
+  - 404 if the session doesn't belong to this workspace.
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Delete Agent Memory
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/memories/:memory
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  memory: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a memory entry. Requires the `agent-memory.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `agent-memory.manage` permission.
+  - 404 if the memory entry doesn't belong to this agent.
+}

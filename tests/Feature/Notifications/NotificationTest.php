@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use App\Models\Workspaces\Workspace;
+use App\Models\Workspaces\WorkspaceMember;
 use App\Notifications\Workspace\MemberJoinedNotification;
 
 it('lists the authenticated user\'s notifications', function () {

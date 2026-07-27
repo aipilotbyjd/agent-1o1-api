@@ -1,0 +1,32 @@
+meta {
+  name: Reject Run Step
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/runs/:run/steps/:step/reject
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  run: 1
+  step: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Rejects a run step that is awaiting approval, halting the workflow run. Requires the
+  `run.approval.review` permission.
+
+  Expected result:
+  - 200 with the updated run and its steps.
+  - 400 if the step is not currently awaiting approval.
+  - 403 if the authenticated user lacks the `run.approval.review` permission.
+  - 404 if the step doesn't belong to the run, or the run doesn't belong to this workspace.
+}

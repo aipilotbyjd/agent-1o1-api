@@ -1,0 +1,56 @@
+meta {
+  name: Create Node
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/nodes
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "category_id": 1,
+    "step_type": "tool",
+    "name": "Send Slack Message",
+    "description": "Posts a message to a Slack channel.",
+    "icon": "slack",
+    "color": "#4A154B",
+    "config_schema": {
+      "type": "object",
+      "properties": {
+        "channel": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    },
+    "input_schema": {},
+    "output_schema": {},
+    "credential_type": "api_key",
+    "cost_hint_usd": 0,
+    "latency_hint_ms": 500,
+    "is_active": true,
+    "docs_url": "https://example.com/docs/nodes/slack-message"
+  }
+}
+
+docs {
+  Creates a custom node for this workspace. `step_type` must be one of the
+  `WorkflowStepType` enum values (`agent`, `tool`, `condition`, `transform`, `delay`,
+  `human_approval`, `merge`, `sub_workflow`, `loop`). The node's `type` key is
+  auto-generated from the name. Requires the `node.manage` permission.
+
+  Expected result:
+  - 201 with the created node.
+  - 422 on validation errors (e.g. unknown `category_id` or `step_type`).
+  - 403 if the user lacks the `node.manage` permission.
+}

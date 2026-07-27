@@ -1,0 +1,31 @@
+meta {
+  name: Delete Workflow Share
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/shares/:share
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  share: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Revokes a share link, invalidating its token. Requires the `workflow.share.manage`
+  permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `workflow.share.manage` permission.
+  - 404 if the share doesn't belong to this workflow.
+}

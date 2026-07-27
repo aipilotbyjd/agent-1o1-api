@@ -1,0 +1,30 @@
+meta {
+  name: Get Workflow
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single workflow with its steps and edges loaded. Requires the `workflow.view`
+  permission.
+
+  Expected result:
+  - 200 with the workflow, including `steps` and `edges`.
+  - 403 if the user lacks the `workflow.view` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

@@ -1,0 +1,32 @@
+meta {
+  name: Restore Workflow Version
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/versions/:version/restore
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  version: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Copies a published version's graph back into the workflow's draft (does not publish
+  it — use "Publish Workflow" afterwards to make it live). `version` is the version
+  number. Requires the `workflow.version.manage` permission.
+
+  Expected result:
+  - 200 with the workflow, including the restored `steps`/`edges` in the draft.
+  - 403 if the user lacks the `workflow.version.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace, or the version doesn't exist.
+}

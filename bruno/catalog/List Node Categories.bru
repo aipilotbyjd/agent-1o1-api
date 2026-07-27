@@ -1,0 +1,23 @@
+meta {
+  name: List Node Categories
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/node-categories
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists all node categories, ordered by sort order. Global, read-only catalog —
+  not workspace-scoped, but still requires an authenticated + verified user.
+
+  Expected result:
+  - 200 with the list of node categories.
+}

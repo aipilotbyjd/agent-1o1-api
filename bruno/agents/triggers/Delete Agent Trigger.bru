@@ -1,0 +1,30 @@
+meta {
+  name: Delete Agent Trigger
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/triggers/:trigger
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  trigger: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a trigger. Requires the `trigger.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `trigger.manage` permission.
+  - 404 if the trigger doesn't belong to this agent.
+}

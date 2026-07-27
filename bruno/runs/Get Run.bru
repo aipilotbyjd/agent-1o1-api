@@ -1,0 +1,29 @@
+meta {
+  name: Get Run
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/runs/:run
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  run: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single run, including its steps. Requires the `run.view` permission.
+
+  Expected result:
+  - 200 with the run and its steps.
+  - 403 if the authenticated user lacks the `run.view` permission.
+  - 404 if the run doesn't belong to this workspace.
+}

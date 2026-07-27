@@ -1,0 +1,30 @@
+meta {
+  name: Get Replay Pack
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/replay-packs/:replayPack
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  replayPack: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single replay pack. Requires the `run.replay-pack.view` permission.
+
+  Expected result:
+  - 200 with the replay pack.
+  - 403 if the user lacks the `run.replay-pack.view` permission.
+  - 404 if the replay pack doesn't belong to this workflow.
+}

@@ -1,0 +1,31 @@
+meta {
+  name: List Contract Test Runs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/contract-snapshots/:snapshot/test-runs
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  snapshot: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists a contract snapshot's test runs, most recently created first. Requires the
+  `workflow.contract-test-run.view` permission.
+
+  Expected result:
+  - 200 with an array of contract test runs.
+  - 403 if the user lacks the `workflow.contract-test-run.view` permission.
+  - 404 if the snapshot doesn't belong to this workflow.
+}

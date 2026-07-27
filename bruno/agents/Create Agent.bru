@@ -1,0 +1,48 @@
+meta {
+  name: Create Agent
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Support Assistant",
+    "description": "Handles first-line customer support questions.",
+    "instructions": "You are a helpful customer support agent. Be concise and friendly.",
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-5",
+    "temperature": 0.7,
+    "settings": {}
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("agentId", res.body.data.id);
+  }
+}
+
+docs {
+  Creates an agent in the workspace. A unique slug is auto-generated from `name`. The
+  creation also snapshots the agent's initial version. Requires the `agent.manage`
+  permission.
+
+  Expected result:
+  - 201 with the created agent.
+  - 422 on validation errors (e.g. invalid `provider`).
+  - 403 if the user lacks the `agent.manage` permission.
+}

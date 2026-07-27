@@ -1,0 +1,37 @@
+meta {
+  name: Sync Agent Tools
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/tools
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tool_ids": [1, 2]
+  }
+}
+
+docs {
+  Replaces the agent's attached tools with the given set (pass `tool_ids: []` to detach
+  all). Every id must belong to a tool in this workspace. A new version is snapshotted
+  when the attached set actually changes. Requires the `agent.tools.sync` permission.
+
+  Expected result:
+  - 200 with the agent's updated tools.
+  - 422 if any `tool_id` doesn't exist in this workspace.
+  - 403 if the user lacks the `agent.tools.sync` permission.
+}

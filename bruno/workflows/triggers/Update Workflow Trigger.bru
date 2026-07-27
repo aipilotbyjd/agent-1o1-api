@@ -1,0 +1,41 @@
+meta {
+  name: Update Workflow Trigger
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/triggers/:trigger
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  trigger: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "config": {
+      "cron": "0 */6 * * *"
+    },
+    "is_active": true
+  }
+}
+
+docs {
+  Updates a trigger's config and/or `is_active` flag. `type` cannot be changed after
+  creation. Requires the `trigger.manage` permission.
+
+  Expected result:
+  - 200 with the updated trigger.
+  - 422 on validation errors (e.g. invalid cron expression).
+  - 403 if the user lacks the `trigger.manage` permission.
+  - 404 if the trigger doesn't belong to this workflow.
+}

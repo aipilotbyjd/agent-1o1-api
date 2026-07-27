@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api\V1\Workspaces;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\WorkspaceMemberResource;
+use App\Http\Resources\V1\Workspaces\WorkspaceMemberResource;
 use App\Http\Responses\ApiResponse;
-use App\Models\WorkspaceInvitation;
+use App\Models\Workspaces\WorkspaceInvitation;
 use App\Notifications\Workspace\MemberJoinedNotification;
-use App\Services\NotificationDispatcher;
-use App\Services\WorkspaceInvitationService;
+use App\Services\Notifications\NotificationDispatcher;
+use App\Services\Workspaces\WorkspaceInvitationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

@@ -1,0 +1,38 @@
+meta {
+  name: Update Notification Preferences
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/notification-preferences
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "event_key": "run.failed",
+    "in_app": true,
+    "email": false,
+    "channel_ids": [1]
+  }
+}
+
+docs {
+  Upserts the authenticated user's notification preference for the given `event_key`
+  within this workspace. `in_app` defaults to `true` and `email` defaults to `false`
+  when omitted. `channel_ids` must reference existing notification channels.
+
+  Expected result:
+  - 200 with the saved notification preference.
+  - 422 on validation errors (e.g. missing `event_key` or unknown `channel_ids`).
+}

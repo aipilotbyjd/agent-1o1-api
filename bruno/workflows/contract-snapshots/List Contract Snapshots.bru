@@ -1,0 +1,30 @@
+meta {
+  name: List Contract Snapshots
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/contract-snapshots
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the workflow's contract snapshots, most recently created first. Requires the
+  `workflow.contract-snapshot.view` permission.
+
+  Expected result:
+  - 200 with an array of contract snapshots.
+  - 403 if the user lacks the `workflow.contract-snapshot.view` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

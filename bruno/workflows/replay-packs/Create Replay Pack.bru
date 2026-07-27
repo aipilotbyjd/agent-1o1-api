@@ -1,0 +1,52 @@
+meta {
+  name: Create Replay Pack
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/replay-packs
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "run_id": 1,
+    "label": "Pre-release regression snapshot",
+    "version_snapshot": {
+      "steps": [],
+      "edges": []
+    },
+    "trigger_data": {
+      "lead_email": "lead@example.com"
+    }
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("replayPackId", res.body.data.id);
+  }
+}
+
+docs {
+  Saves a replayable snapshot of a workflow run — `version_snapshot` (the graph at run
+  time) is required; `run_id`, `label`, and `trigger_data` are optional. Requires the
+  `run.replay-pack.manage` permission.
+
+  Expected result:
+  - 201 with the created replay pack.
+  - 422 on validation errors (e.g. missing `version_snapshot`).
+  - 403 if the user lacks the `run.replay-pack.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use App\Models\WorkspaceInvitation;
+use App\Models\Workspaces\WorkspaceInvitation;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -41,7 +41,7 @@ class WorkspaceInvitationMail extends Mailable implements ShouldQueue
             markdown: 'emails.workspace-invitation',
             with: [
                 'workspaceName' => $this->invitation->workspace->name,
-                'role' => $this->invitation->role,
+                'role' => $this->invitation->role->value,
                 'acceptUrl' => $this->acceptUrl,
                 'expiresAt' => $this->invitation->expires_at,
             ],

@@ -1,0 +1,38 @@
+meta {
+  name: Update Git Sync Config
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/git-sync-configs/:gitSyncConfig
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  gitSyncConfig: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "branch": "develop",
+    "is_active": false
+  }
+}
+
+docs {
+  Updates a git sync config. All fields are optional. Requires the `git-sync.manage`
+  permission.
+
+  Expected result:
+  - 200 with the updated git sync config.
+  - 422 on validation errors.
+  - 403 if the authenticated user lacks the `git-sync.manage` permission.
+  - 404 if the config doesn't belong to this workspace.
+}

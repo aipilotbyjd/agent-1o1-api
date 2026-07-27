@@ -2,8 +2,8 @@
 
 namespace App\Notifications\Workspace;
 
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use App\Models\Workspaces\Workspace;
+use App\Models\Workspaces\WorkspaceMember;
 
 class MemberJoinedNotification extends WorkspaceEventNotification
 {

@@ -1,9 +1,9 @@
 <?php
 
-use App\Models\NotificationChannel;
+use App\Models\Notifications\NotificationChannel;
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use App\Models\Workspaces\Workspace;
+use App\Models\Workspaces\WorkspaceMember;
 use Illuminate\Support\Facades\Http;
 
 it('allows an admin to create a notification channel', function () {

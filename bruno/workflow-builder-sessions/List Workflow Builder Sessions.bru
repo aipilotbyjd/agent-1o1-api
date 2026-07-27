@@ -1,0 +1,29 @@
+meta {
+  name: List Workflow Builder Sessions
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflow-builder-sessions
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the authenticated user's own workflow builder sessions in the workspace,
+  most recently active first, with a message count. Requires the
+  `workflow.builder.use` permission.
+
+  Expected result:
+  - 200 with the list of sessions.
+  - 403 if the user lacks the `workflow.builder.use` permission.
+}

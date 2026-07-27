@@ -1,0 +1,29 @@
+meta {
+  name: Delete Document Embedding
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/document-embeddings/:documentEmbedding
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  documentEmbedding: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a document embedding. Requires the `document-embedding.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the authenticated user lacks the `document-embedding.manage` permission.
+  - 404 if the document embedding doesn't belong to this workspace.
+}
