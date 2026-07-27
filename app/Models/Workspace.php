@@ -66,4 +66,142 @@ class Workspace extends Model
     {
         return $this->hasMany(NotificationPreference::class);
     }
+
+    /**
+     * @return HasMany<Agent, $this>
+     */
+    public function agents(): HasMany
+    {
+        return $this->hasMany(Agent::class);
+    }
+
+    /**
+     * @return HasMany<Tool, $this>
+     */
+    public function tools(): HasMany
+    {
+        return $this->hasMany(Tool::class);
+    }
+
+    /**
+     * @return HasMany<Workflow, $this>
+     */
+    public function workflows(): HasMany
+    {
+        return $this->hasMany(Workflow::class);
+    }
+
+    /**
+     * @return HasMany<Run, $this>
+     */
+    public function runs(): HasMany
+    {
+        return $this->hasMany(Run::class);
+    }
+
+    /**
+     * Custom nodes owned by this workspace (excludes the shared builtin catalog).
+     *
+     * @return HasMany<Node, $this>
+     */
+    public function nodes(): HasMany
+    {
+        return $this->hasMany(Node::class);
+    }
+
+    /**
+     * @return HasMany<Credential, $this>
+     */
+    public function credentials(): HasMany
+    {
+        return $this->hasMany(Credential::class);
+    }
+
+    /**
+     * @return HasMany<Variable, $this>
+     */
+    public function variables(): HasMany
+    {
+        return $this->hasMany(Variable::class);
+    }
+
+    /**
+     * @return HasMany<AgentKnowledge, $this>
+     */
+    public function agentKnowledge(): HasMany
+    {
+        return $this->hasMany(AgentKnowledge::class);
+    }
+
+    /**
+     * @return HasMany<AgentMemory, $this>
+     */
+    public function agentMemories(): HasMany
+    {
+        return $this->hasMany(AgentMemory::class);
+    }
+
+    /**
+     * @return HasMany<DocumentEmbedding, $this>
+     */
+    public function documentEmbeddings(): HasMany
+    {
+        return $this->hasMany(DocumentEmbedding::class);
+    }
+
+    /**
+     * @return HasMany<AgentSkill, $this>
+     */
+    public function agentSkills(): HasMany
+    {
+        return $this->hasMany(AgentSkill::class);
+    }
+
+    /**
+     * @return HasMany<RunLog, $this>
+     */
+    public function runLogs(): HasMany
+    {
+        return $this->hasMany(RunLog::class);
+    }
+
+    /**
+     * @return HasMany<RunReplayPack, $this>
+     */
+    public function runReplayPacks(): HasMany
+    {
+        return $this->hasMany(RunReplayPack::class);
+    }
+
+    /**
+     * @return HasMany<WorkspaceEnvironment, $this>
+     */
+    public function environments(): HasMany
+    {
+        return $this->hasMany(WorkspaceEnvironment::class);
+    }
+
+    /**
+     * @return HasMany<WorkflowApproval, $this>
+     */
+    public function workflowApprovals(): HasMany
+    {
+        return $this->hasMany(WorkflowApproval::class);
+    }
+
+    /**
+     * @return HasMany<GitSyncConfig, $this>
+     */
+    public function gitSyncConfigs(): HasMany
+    {
+        return $this->hasMany(GitSyncConfig::class);
+    }
+
+    /**
+     * @return HasMany<WorkflowBuilderSession, $this>
+     */
+    public function builderSessions(): HasMany
+    {
+        return $this->hasMany(WorkflowBuilderSession::class);
+    }
 }

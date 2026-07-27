@@ -67,5 +67,9 @@ class AppServiceProvider extends ServiceProvider
     private function configureRateLimiting(): void
     {
         RateLimiter::for('auth', fn (Request $request): Limit => Limit::perMinute(10)->by($request->ip()));
+
+        RateLimiter::for('trigger-hooks', fn (Request $request): Limit => Limit::perMinute(
+            (int) config('triggers.hook_rate_limit_per_minute'),
+        )->by($request->route('token') ?? $request->ip()));
     }
 }

@@ -21,5 +21,12 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test User',
             'email' => 'test@example.com',
         ]);
+
+        $this->call(TriggerTypeSeeder::class);
+        $this->call(NodeCatalogSeeder::class);
+        $this->call(CredentialTypeSeeder::class);
+        $this->call(AgentTemplateSeeder::class);
+        $this->call(WorkflowTemplateSeeder::class);
+        $this->call(TemplateCollectionSeeder::class);
     }
 }
