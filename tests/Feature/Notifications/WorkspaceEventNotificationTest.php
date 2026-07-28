@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceInvitation;
-use App\Models\WorkspaceMember;
+use App\Models\Workspaces\Workspace;
+use App\Models\Workspaces\WorkspaceInvitation;
+use App\Models\Workspaces\WorkspaceMember;
 use App\Notifications\Workspace\MemberInvitedNotification;
 use App\Notifications\Workspace\MemberJoinedNotification;
 use App\Notifications\Workspace\MemberRemovedNotification;

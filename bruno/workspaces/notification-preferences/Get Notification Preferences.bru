@@ -1,0 +1,27 @@
+meta {
+  name: Get Notification Preferences
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/notification-preferences
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the authenticated user's notification preferences for this workspace, one row per
+  `event_key`.
+
+  Expected result:
+  - 200 with a list of notification preferences.
+}

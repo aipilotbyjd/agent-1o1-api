@@ -1,0 +1,29 @@
+meta {
+  name: Delete Variable
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/variables/:variable
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  variable: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a variable. Requires the `variable.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `variable.manage` permission.
+  - 404 if the variable doesn't belong to this workspace.
+}

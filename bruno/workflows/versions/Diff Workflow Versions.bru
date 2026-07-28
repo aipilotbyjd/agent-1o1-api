@@ -1,0 +1,33 @@
+meta {
+  name: Diff Workflow Versions
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/versions/:from/diff/:to
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  from: 1
+  to: 2
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Diffs two published versions' graphs by step key: which steps were added, removed,
+  or changed (`type`/`config` differences), and which edges were added or removed.
+  `from`/`to` are version numbers. Requires the `workflow.version.view` permission.
+
+  Expected result:
+  - 200 with { from, to, steps: { added, removed, changed }, edges: { added, removed } }.
+  - 403 if the user lacks the `workflow.version.view` permission.
+  - 404 if the workflow doesn't belong to this workspace, or either version doesn't exist.
+}

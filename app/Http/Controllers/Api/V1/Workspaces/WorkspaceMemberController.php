@@ -2,20 +2,22 @@
 
 namespace App\Http\Controllers\Api\V1\Workspaces;
 
+use App\Enums\Workspaces\Permission;
+use App\Enums\Workspaces\Role;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Workspaces\InviteWorkspaceMemberRequest;
 use App\Http\Requests\Api\V1\Workspaces\UpdateWorkspaceMemberRoleRequest;
-use App\Http\Resources\V1\WorkspaceInvitationResource;
-use App\Http\Resources\V1\WorkspaceMemberResource;
+use App\Http\Resources\V1\Workspaces\WorkspaceInvitationResource;
+use App\Http\Resources\V1\Workspaces\WorkspaceMemberResource;
 use App\Http\Responses\ApiResponse;
-use App\Models\Workspace;
-use App\Models\WorkspaceMember;
+use App\Models\Workspaces\Workspace;
+use App\Models\Workspaces\WorkspaceMember;
 use App\Notifications\Workspace\MemberInvitedNotification;
 use App\Notifications\Workspace\MemberRemovedNotification;
 use App\Notifications\Workspace\MemberRoleChangedNotification;
-use App\Services\NotificationDispatcher;
-use App\Services\WorkspaceInvitationService;
-use App\Services\WorkspaceService;
+use App\Services\Notifications\NotificationDispatcher;
+use App\Services\Workspaces\WorkspaceInvitationService;
+use App\Services\Workspaces\WorkspaceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -27,8 +29,10 @@ class WorkspaceMemberController extends Controller
         private readonly NotificationDispatcher $notifications,
     ) {}
 
-    public function index(Workspace $workspace): JsonResponse
+    public function index(Request $request, Workspace $workspace): JsonResponse
     {
+        $this->requirePermission(Permission::MemberView);
+
         $members = $workspace->members()->with('user')->get();
 
         return ApiResponse::success(WorkspaceMemberResource::collection($members));
@@ -42,7 +46,7 @@ class WorkspaceMemberController extends Controller
             $workspace,
             $inviter,
             $request->string('email')->value(),
-            $request->string('role')->value(),
+            Role::from($request->string('role')->value()),
         );
 
         $this->notifications->dispatch(
@@ -55,12 +59,12 @@ class WorkspaceMemberController extends Controller
 
     public function updateRole(UpdateWorkspaceMemberRoleRequest $request, Workspace $workspace, WorkspaceMember $member): JsonResponse
     {
-        $this->ensureMemberBelongsToWorkspace($workspace, $member);
+        $this->ensureBelongsToWorkspace($workspace, $member);
 
         $previousRole = $member->role;
         $actor = $request->user();
 
-        $member = $this->workspaceService->updateMemberRole($member, $request->string('role')->value());
+        $member = $this->workspaceService->updateMemberRole($member, Role::from($request->string('role')->value()));
 
         $this->notifications->dispatch(
             $this->notifications->ownersAndAdmins($workspace, except: $actor),
@@ -72,11 +76,9 @@ class WorkspaceMemberController extends Controller
 
     public function destroy(Request $request, Workspace $workspace, WorkspaceMember $member): JsonResponse
     {
-        $this->ensureMemberBelongsToWorkspace($workspace, $member);
+        $this->ensureBelongsToWorkspace($workspace, $member);
 
-        if (! $request->user()->hasWorkspaceRole($workspace, 'owner', 'admin')) {
-            return ApiResponse::forbidden();
-        }
+        $this->requirePermission(Permission::MemberRemove);
 
         $actor = $request->user();
         $removedUser = $member->load('user')->user;
@@ -100,17 +102,10 @@ class WorkspaceMemberController extends Controller
 
     public function invitations(Request $request, Workspace $workspace): JsonResponse
     {
-        if (! $request->user()->hasWorkspaceRole($workspace, 'owner', 'admin')) {
-            return ApiResponse::forbidden();
-        }
+        $this->requirePermission(Permission::InvitationView);
 
         $invitations = $this->invitationService->pending($workspace);
 
         return ApiResponse::success(WorkspaceInvitationResource::collection($invitations));
-    }
-
-    private function ensureMemberBelongsToWorkspace(Workspace $workspace, WorkspaceMember $member): void
-    {
-        abort_if($member->workspace_id !== $workspace->id, 404);
     }
 }

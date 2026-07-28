@@ -1,0 +1,37 @@
+meta {
+  name: Create Variable
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/variables
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "key": "DEFAULT_TIMEZONE",
+    "value": "UTC",
+    "is_secret": false
+  }
+}
+
+docs {
+  Creates a workspace variable. `key` must be unique within the workspace and match
+  `^[a-zA-Z][a-zA-Z0-9_]*$`. Requires the `variable.manage` permission.
+
+  Expected result:
+  - 201 with the created variable.
+  - 422 on validation errors (e.g. duplicate `key`).
+  - 403 if the user lacks the `variable.manage` permission.
+}

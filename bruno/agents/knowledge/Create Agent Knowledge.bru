@@ -1,0 +1,45 @@
+meta {
+  name: Create Agent Knowledge
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/knowledge
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "title": "Refund Policy",
+    "content": "Refunds are issued within 14 days of purchase upon request.",
+    "source_type": "manual",
+    "source_url": null,
+    "file_path": null,
+    "tokens": 42,
+    "is_active": true,
+    "sort_order": 0,
+    "metadata": {}
+  }
+}
+
+docs {
+  Adds a knowledge base entry to the agent. Requires the `agent-knowledge.manage`
+  permission.
+
+  Expected result:
+  - 201 with the created knowledge entry.
+  - 422 on validation errors.
+  - 403 if the user lacks the `agent-knowledge.manage` permission.
+  - 404 if the agent doesn't belong to this workspace.
+}

@@ -1,0 +1,72 @@
+meta {
+  name: Save Workflow Graph
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/graph
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "steps": [
+      {
+        "key": "run_agent",
+        "type": "agent",
+        "config": {
+          "agent_id": 1
+        },
+        "position": { "x": 0, "y": 0 }
+      },
+      {
+        "key": "call_tool",
+        "type": "tool",
+        "config": {
+          "tool_id": 1
+        },
+        "position": { "x": 300, "y": 0 }
+      }
+    ],
+    "edges": [
+      {
+        "from": "run_agent",
+        "to": "call_tool",
+        "condition": null
+      }
+    ]
+  }
+}
+
+docs {
+  Replaces the workflow's entire graph (steps + edges) in one call — this is the
+  workflow builder's save endpoint. `steps.*.key` must be unique, lowercase,
+  `snake_case`-like (`^[a-z][a-z0-9_-]*$`), and is what `edges.*.from`/`edges.*.to`
+  reference. `steps.*.type` must be one of `agent`, `tool`, `condition`, `transform`,
+  `delay`, `human_approval`, `merge`, `sub_workflow`, `loop`; the required
+  `steps.*.config` fields depend on `type` — e.g. `agent` needs `config.agent_id`
+  (must belong to this workspace), `tool` needs `config.tool_id` (must belong to this
+  workspace), `condition` needs `config.field` (+ optional `config.operator`),
+  `transform` needs `config.mapping`, `delay` needs `config.seconds`. `edges` must
+  reference existing step keys and cannot point a step to itself. This overwrites the
+  draft graph only — publish separately to make it live. Requires the
+  `workflow.manage` permission.
+
+  Expected result:
+  - 200 with the workflow, including the saved `steps`/`edges` and `currentVersion`.
+  - 422 on validation errors (e.g. unknown edge reference, missing type-specific config,
+    duplicate step key).
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

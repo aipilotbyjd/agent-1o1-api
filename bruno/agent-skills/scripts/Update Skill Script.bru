@@ -1,0 +1,39 @@
+meta {
+  name: Update Skill Script
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills/:skill/scripts/:script
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  skill: 1
+  script: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "description": "Formats a raw order payload into a human-readable summary, including ETA.",
+    "code": "function run(order) {\n  return `Order #${order.id}: ${order.status} (ETA ${order.eta})`;\n}",
+    "is_enabled": true
+  }
+}
+
+docs {
+  Updates a skill script. Requires the `agent-skill-script.manage` permission.
+
+  Expected result:
+  - 200 with the updated script.
+  - 422 on validation errors.
+  - 403 if the user lacks the `agent-skill-script.manage` permission.
+  - 404 if the script doesn't belong to this skill.
+}

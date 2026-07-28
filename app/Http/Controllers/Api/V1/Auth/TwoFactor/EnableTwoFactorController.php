@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api\V1\Auth\TwoFactor;
 
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
-use App\Services\TwoFactorAuthService;
+use App\Services\Auth\TwoFactorAuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

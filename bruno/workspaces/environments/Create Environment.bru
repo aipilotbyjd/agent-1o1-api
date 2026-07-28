@@ -1,0 +1,40 @@
+meta {
+  name: Create Environment
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/environments
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Staging",
+    "slug": "staging",
+    "variables": {
+      "API_BASE_URL": "https://staging.example.com"
+    },
+    "is_default": false
+  }
+}
+
+docs {
+  Creates a workspace environment. `slug` must be unique within the workspace and match
+  `^[a-z][a-z0-9-]*$`. Requires the `environment.manage` permission.
+
+  Expected result:
+  - 201 with the created environment.
+  - 422 on validation errors (e.g. slug already taken or malformed).
+  - 403 if the authenticated user lacks the `environment.manage` permission.
+}

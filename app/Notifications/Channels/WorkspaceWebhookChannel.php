@@ -2,7 +2,7 @@
 
 namespace App\Notifications\Channels;
 
-use App\Models\NotificationChannel;
+use App\Models\Notifications\NotificationChannel;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;

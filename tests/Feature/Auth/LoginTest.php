@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\User;
-use App\Services\TwoFactorAuthService;
+use App\Services\Auth\TwoFactorAuthService;
 use Illuminate\Support\Facades\Hash;
 
 it('logs in with valid credentials', function () {

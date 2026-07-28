@@ -1,0 +1,31 @@
+meta {
+  name: Instantiate Workflow Template
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflow-templates/:template/instantiate
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  template: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Creates a new workflow in the workspace by copying an active workflow template's
+  name, description, and graph (steps + edges), and increments the template's usage
+  count. Requires the `workflow.template.use` permission.
+
+  Expected result:
+  - 201 with the created workflow.
+  - 403 if the user lacks the `workflow.template.use` permission.
+  - 404 if the template doesn't exist.
+}

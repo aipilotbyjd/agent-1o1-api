@@ -1,0 +1,23 @@
+meta {
+  name: List Agent Templates
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/agent-templates
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists all active agent templates, ordered by sort order. Global, read-only catalog —
+  not workspace-scoped, but still requires an authenticated + verified user.
+
+  Expected result:
+  - 200 with the list of agent templates.
+}

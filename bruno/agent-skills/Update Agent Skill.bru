@@ -1,0 +1,39 @@
+meta {
+  name: Update Agent Skill
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills/:skill
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  skill: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Order Lookup",
+    "description": "Looks up order status, shipping, and payment details for a customer.",
+    "instructions": "Given an order number, look up its current status and summarize it clearly, including shipping ETA.",
+    "is_shared": true
+  }
+}
+
+docs {
+  Updates an agent skill. Requires the `agent-skill.manage` permission.
+
+  Expected result:
+  - 200 with the updated skill.
+  - 422 on validation errors (e.g. slug already taken).
+  - 403 if the user lacks the `agent-skill.manage` permission.
+  - 404 if the skill doesn't belong to this workspace.
+}

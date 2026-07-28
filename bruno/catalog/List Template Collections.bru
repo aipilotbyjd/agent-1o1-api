@@ -1,0 +1,23 @@
+meta {
+  name: List Template Collections
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/template-collections
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists all active template collections, ordered by sort order. Global, read-only
+  catalog — not workspace-scoped, but still requires an authenticated + verified user.
+
+  Expected result:
+  - 200 with the list of template collections.
+}

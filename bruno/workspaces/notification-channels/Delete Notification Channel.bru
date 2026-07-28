@@ -1,0 +1,29 @@
+meta {
+  name: Delete Notification Channel
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/notification-channels/:notificationChannel
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  notificationChannel: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a notification channel. Requires the `notification-channel.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the authenticated user lacks the `notification-channel.manage` permission.
+  - 404 if the channel doesn't belong to this workspace.
+}

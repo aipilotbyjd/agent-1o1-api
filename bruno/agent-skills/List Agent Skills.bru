@@ -1,0 +1,28 @@
+meta {
+  name: List Agent Skills
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists all agent skills in the workspace, ordered by name. Requires the
+  `agent-skill.view` permission.
+
+  Expected result:
+  - 200 with an array of skills.
+  - 403 if the user lacks the `agent-skill.view` permission.
+}

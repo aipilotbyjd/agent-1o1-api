@@ -1,0 +1,43 @@
+meta {
+  name: Trigger Webhook
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/hooks/:token
+  body: json
+  auth: none
+}
+
+params:path {
+  token: abc123token
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "event": "example.event",
+    "data": {}
+  }
+}
+
+docs {
+  Public route authenticated by the trigger's own secret `token`, not by a bearer
+  token. Fires the webhook trigger matching `token` and starts a run if the payload
+  passes the trigger's filters. The request body is NOT a fixed shape — it is
+  whatever the trigger's source system (Stripe, Slack, a custom integration, etc.)
+  sends; the JSON above is only a generic placeholder. Some trigger types also
+  require a signature header, verified against the trigger's configured secret.
+
+  Expected result:
+  - 202 with { run_id } if a run was started.
+  - 200 with a message if the delivery was a duplicate or was filtered out.
+  - 401 if the webhook signature is invalid.
+  - 404 if no active webhook trigger matches the token.
+  - 409 if a run is already in progress for this trigger's target.
+  - 500 if the trigger failed to start a run.
+}

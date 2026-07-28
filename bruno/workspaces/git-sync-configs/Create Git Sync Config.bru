@@ -1,0 +1,42 @@
+meta {
+  name: Create Git Sync Config
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/git-sync-configs
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "provider": "github",
+    "repository": "acme/workflows",
+    "branch": "main",
+    "base_path": "workflows/",
+    "access_token": "ghp_placeholder",
+    "webhook_secret": "whsec_placeholder",
+    "is_active": true
+  }
+}
+
+docs {
+  Creates a git sync config used to sync workflows to a git repository. `access_token` is
+  required and stored for authenticating with the provider. Requires the
+  `git-sync.manage` permission.
+
+  Expected result:
+  - 201 with the created git sync config.
+  - 422 on validation errors (e.g. missing `repository` or `access_token`).
+  - 403 if the authenticated user lacks the `git-sync.manage` permission.
+}

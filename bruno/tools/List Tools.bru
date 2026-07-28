@@ -1,0 +1,28 @@
+meta {
+  name: List Tools
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/tools
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists all tools in the workspace, most recent first. Requires the `tool.view`
+  permission.
+
+  Expected result:
+  - 200 with the list of tools.
+  - 403 if the user lacks the `tool.view` permission.
+}

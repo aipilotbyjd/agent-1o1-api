@@ -1,0 +1,32 @@
+meta {
+  name: Instantiate Agent Template
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-templates/:template/instantiate
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  template: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Creates a new agent in the workspace by cloning an active agent template's prompt,
+  provider, model, and settings, and increments the template's usage count. The new
+  agent's initial version is snapshotted automatically. Requires the
+  `agent-template.use` permission.
+
+  Expected result:
+  - 201 with the created agent.
+  - 403 if the user lacks the `agent-template.use` permission.
+  - 404 if the template doesn't exist.
+}

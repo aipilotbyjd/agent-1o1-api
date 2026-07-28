@@ -1,0 +1,39 @@
+meta {
+  name: Create Skill Reference
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills/:skill/references
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  skill: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "title": "Order Status Codes",
+    "content": "pending, processing, shipped, delivered, cancelled",
+    "sort_order": 0
+  }
+}
+
+docs {
+  Adds a reference document to the skill. Requires the `agent-skill-reference.manage`
+  permission.
+
+  Expected result:
+  - 201 with the created reference.
+  - 422 on validation errors.
+  - 403 if the user lacks the `agent-skill-reference.manage` permission.
+  - 404 if the skill doesn't belong to this workspace.
+}

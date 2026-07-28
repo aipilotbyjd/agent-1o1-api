@@ -1,0 +1,31 @@
+meta {
+  name: List Agent Trigger Events
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/triggers/:trigger/events
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  trigger: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the trigger's fire/skip events (webhook deliveries, scheduled fires, manual runs),
+  most recent first, paginated 25 per page. Requires the `trigger-event.view` permission.
+
+  Expected result:
+  - 200 with a paginated array of trigger events.
+  - 403 if the user lacks the `trigger-event.view` permission.
+  - 404 if the trigger doesn't belong to this workspace.
+}

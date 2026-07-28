@@ -1,0 +1,39 @@
+meta {
+  name: Approve Workflow Approval
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/approvals/:approval/approve
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  approval: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "notes": "Looks good, approved."
+  }
+}
+
+docs {
+  Approves a pending approval request. `notes` is optional. Only valid while the
+  approval's `status` is `pending`. Requires the `workflow.approval.review`
+  permission.
+
+  Expected result:
+  - 200 with the updated approval (status `approved`).
+  - 200-shaped error (`ApiResponse::error`) if the approval was already reviewed.
+  - 403 if the user lacks the `workflow.approval.review` permission.
+  - 404 if the approval doesn't belong to this workflow.
+}

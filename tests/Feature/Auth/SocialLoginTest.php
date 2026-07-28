@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\OAuthConnection;
+use App\Models\Credentials\OAuthConnection;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Laravel\Socialite\Contracts\Provider;

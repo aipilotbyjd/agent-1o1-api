@@ -1,0 +1,29 @@
+meta {
+  name: List Document Embeddings
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/document-embeddings
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the workspace's document embeddings, newest first (paginated, 25 per page).
+  Supports an optional `collection` query filter. Requires the `document-embedding.view`
+  permission.
+
+  Expected result:
+  - 200 with a paginated list of document embeddings.
+  - 403 if the authenticated user lacks the `document-embedding.view` permission.
+}

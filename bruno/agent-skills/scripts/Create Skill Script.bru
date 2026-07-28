@@ -1,0 +1,40 @@
+meta {
+  name: Create Skill Script
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills/:skill/scripts
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  skill: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "format_order_summary",
+    "description": "Formats a raw order payload into a human-readable summary.",
+    "language": "javascript",
+    "code": "function run(order) {\n  return `Order #${order.id}: ${order.status}`;\n}",
+    "is_enabled": true
+  }
+}
+
+docs {
+  Adds a script to the skill. Requires the `agent-skill-script.manage` permission.
+
+  Expected result:
+  - 201 with the created script.
+  - 422 on validation errors.
+  - 403 if the user lacks the `agent-skill-script.manage` permission.
+  - 404 if the skill doesn't belong to this workspace.
+}

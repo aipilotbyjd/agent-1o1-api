@@ -1,0 +1,32 @@
+meta {
+  name: Get Workflow Version
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/versions/:version
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  version: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single published version, including its full graph snapshot. `version` is
+  the version number (not a database id). Requires the `workflow.version.view`
+  permission.
+
+  Expected result:
+  - 200 with the version, including `graph`.
+  - 403 if the user lacks the `workflow.version.view` permission.
+  - 404 if the workflow doesn't belong to this workspace, or the version doesn't exist.
+}

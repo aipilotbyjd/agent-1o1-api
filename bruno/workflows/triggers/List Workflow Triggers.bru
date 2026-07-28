@@ -1,0 +1,30 @@
+meta {
+  name: List Workflow Triggers
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/triggers
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the triggers configured to fire this workflow. Requires the `trigger.view`
+  permission.
+
+  Expected result:
+  - 200 with an array of triggers.
+  - 403 if the user lacks the `trigger.view` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

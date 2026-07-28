@@ -1,0 +1,45 @@
+meta {
+  name: Create Workflow Approval
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/approvals
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "version_id": 1,
+    "notes": "Please review before promoting to production."
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("approvalId", res.body.data.id);
+  }
+}
+
+docs {
+  Requests an approval for the workflow. `version_id` is optional but, if given, must
+  belong to this workflow. `notes` is optional. `requested_by` is set automatically.
+  Requires the `workflow.approval.request` permission.
+
+  Expected result:
+  - 201 with the created approval (status `pending`).
+  - 422 on validation errors (e.g. `version_id` not found for this workflow).
+  - 403 if the user lacks the `workflow.approval.request` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

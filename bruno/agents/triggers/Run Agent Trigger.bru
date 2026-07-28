@@ -1,0 +1,34 @@
+meta {
+  name: Run Agent Trigger
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/triggers/:trigger/run
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  trigger: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Manually fires the trigger, starting a run for its target agent. Requires the
+  `trigger.run` permission.
+
+  Expected result:
+  - 202 with { run_id } once the run has started.
+  - 409 if a run is already in progress for this trigger's target, or the target isn't
+    currently runnable.
+  - 403 if the user lacks the `trigger.run` permission.
+  - 404 if the trigger doesn't belong to this agent.
+  - 500 if starting the run fails unexpectedly.
+}

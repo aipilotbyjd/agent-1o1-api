@@ -2,8 +2,8 @@
 
 namespace App\Notifications\Workspace;
 
-use App\Models\NotificationPreference;
-use App\Models\Workspace;
+use App\Models\Notifications\NotificationPreference;
+use App\Models\Workspaces\Workspace;
 use App\Notifications\Channels\WorkspaceWebhookChannel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Bus\Queueable;

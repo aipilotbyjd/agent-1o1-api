@@ -1,0 +1,28 @@
+meta {
+  name: Get Workflow Template
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workflow-templates/:key
+  body: none
+  auth: inherit
+}
+
+params:path {
+  key: lead-qualification
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single workflow template by id or slug. Global, read-only catalog — not
+  workspace-scoped, but still requires an authenticated + verified user.
+
+  Expected result:
+  - 200 with the workflow template.
+  - 404 if no template matches the given id or slug.
+}

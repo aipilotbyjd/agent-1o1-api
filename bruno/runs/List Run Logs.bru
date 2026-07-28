@@ -1,0 +1,30 @@
+meta {
+  name: List Run Logs
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/runs/:run/logs
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  run: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists a run's log entries in chronological order (paginated, 25 per page). Requires the
+  `run.log.view` permission.
+
+  Expected result:
+  - 200 with a paginated list of run logs.
+  - 403 if the authenticated user lacks the `run.log.view` permission.
+  - 404 if the run doesn't belong to this workspace.
+}

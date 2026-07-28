@@ -1,0 +1,23 @@
+meta {
+  name: List Notifications
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/notifications
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the authenticated user's notifications, paginated (`?per_page=`, default 25).
+  Pass `?unread=1` to only return unread notifications. Not workspace-scoped.
+
+  Expected result:
+  - 200 with a paginated list of notifications.
+}

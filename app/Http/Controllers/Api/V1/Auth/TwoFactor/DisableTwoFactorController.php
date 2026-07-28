@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\V1\Auth\TwoFactor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Auth\DisableTwoFactorRequest;
 use App\Http\Responses\ApiResponse;
-use App\Services\TwoFactorAuthService;
+use App\Services\Auth\TwoFactorAuthService;
 use Illuminate\Http\JsonResponse;
 
 class DisableTwoFactorController extends Controller

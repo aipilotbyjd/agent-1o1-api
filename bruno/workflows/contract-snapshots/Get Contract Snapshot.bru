@@ -1,0 +1,31 @@
+meta {
+  name: Get Contract Snapshot
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/contract-snapshots/:snapshot
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  snapshot: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single contract snapshot. Requires the `workflow.contract-snapshot.view`
+  permission.
+
+  Expected result:
+  - 200 with the contract snapshot.
+  - 403 if the user lacks the `workflow.contract-snapshot.view` permission.
+  - 404 if the snapshot doesn't belong to this workflow.
+}

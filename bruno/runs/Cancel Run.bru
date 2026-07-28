@@ -1,0 +1,32 @@
+meta {
+  name: Cancel Run
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/runs/:run/cancel
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  run: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Cancels a run. Allowed for the user who triggered the run, or any user with the
+  `run.approval.review` permission. Fails if the run has already reached a terminal
+  status (completed, failed, or cancelled).
+
+  Expected result:
+  - 200 with the updated run.
+  - 403 if the authenticated user is neither the triggering user nor an approver.
+  - 400 if the run has already finished.
+  - 404 if the run doesn't belong to this workspace.
+}

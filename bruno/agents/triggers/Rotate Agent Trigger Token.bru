@@ -1,0 +1,32 @@
+meta {
+  name: Rotate Agent Trigger Token
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/triggers/:trigger/rotate-token
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  trigger: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Rotates the trigger's webhook token, invalidating the old webhook URL. Only valid for
+  `webhook` type triggers. Requires the `trigger.token-rotate` permission.
+
+  Expected result:
+  - 200 with the updated trigger (new token).
+  - 422 if the trigger isn't a `webhook` type.
+  - 403 if the user lacks the `trigger.token-rotate` permission.
+  - 404 if the trigger doesn't belong to this agent.
+}

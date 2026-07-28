@@ -1,35 +1,22 @@
 <?php
 
-use App\Http\Controllers\Api\V1\Auth\ChangePasswordController;
-use App\Http\Controllers\Api\V1\Auth\ForgotPasswordController;
-use App\Http\Controllers\Api\V1\Auth\LoginController;
-use App\Http\Controllers\Api\V1\Auth\LogoutAllController;
-use App\Http\Controllers\Api\V1\Auth\LogoutController;
-use App\Http\Controllers\Api\V1\Auth\RefreshTokenController;
-use App\Http\Controllers\Api\V1\Auth\RegisterController;
-use App\Http\Controllers\Api\V1\Auth\ResendVerificationController;
-use App\Http\Controllers\Api\V1\Auth\ResetPasswordController;
-use App\Http\Controllers\Api\V1\Auth\Session\IndexSessionController;
-use App\Http\Controllers\Api\V1\Auth\Session\RevokeSessionController;
-use App\Http\Controllers\Api\V1\Auth\Social\SocialCallbackController;
-use App\Http\Controllers\Api\V1\Auth\Social\SocialRedirectController;
-use App\Http\Controllers\Api\V1\Auth\TwoFactor\ConfirmTwoFactorController;
-use App\Http\Controllers\Api\V1\Auth\TwoFactor\DisableTwoFactorController;
-use App\Http\Controllers\Api\V1\Auth\TwoFactor\EnableTwoFactorController;
-use App\Http\Controllers\Api\V1\Auth\TwoFactor\RecoveryCodesController;
-use App\Http\Controllers\Api\V1\Auth\TwoFactor\RegenerateRecoveryCodesController;
-use App\Http\Controllers\Api\V1\Auth\TwoFactor\VerifyTwoFactorController;
-use App\Http\Controllers\Api\V1\Auth\User\DeleteUserController;
-use App\Http\Controllers\Api\V1\Auth\User\ShowUserController;
-use App\Http\Controllers\Api\V1\Auth\User\UpdateUserController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
-use App\Http\Controllers\Api\V1\NotificationChannelController;
-use App\Http\Controllers\Api\V1\NotificationController;
-use App\Http\Controllers\Api\V1\NotificationPreferenceController;
+use App\Http\Controllers\Api\V1\Billing\PlanController;
+use App\Http\Controllers\Api\V1\Triggers\WebhookController;
+use App\Http\Controllers\Api\V1\Workflows\ShowSharedWorkflowController;
 use App\Http\Controllers\Api\V1\Workspaces\AcceptInvitationController;
-use App\Http\Controllers\Api\V1\Workspaces\WorkspaceController;
-use App\Http\Controllers\Api\V1\Workspaces\WorkspaceMemberController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| This file only wires together the top-level route groups and their
+| shared middleware. Each domain's actual routes live in routes/api/*.php,
+| split to mirror app/Http/Controllers/Api/V1/*'s folder structure.
+|
+*/
 
 Route::prefix('v1')->as('v1.')->group(function (): void {
 
@@ -38,92 +25,44 @@ Route::prefix('v1')->as('v1.')->group(function (): void {
         ->middleware(['signed', 'throttle:auth'])
         ->name('auth.verify-email');
 
-    // Guest — unauthenticated auth actions.
-    Route::prefix('auth')->as('auth.')->middleware('throttle:auth')->group(function (): void {
-        Route::post('register', RegisterController::class)->name('register');
-        Route::post('login', LoginController::class)->name('login');
-        Route::post('refresh', RefreshTokenController::class)->name('refresh');
+    // Public — authenticated by the trigger's secret token.
+    Route::post('hooks/{token}', WebhookController::class)
+        ->middleware('throttle:trigger-hooks')
+        ->name('hooks.trigger');
 
-        Route::prefix('password')->as('password.')->group(function (): void {
-            Route::post('forgot', ForgotPasswordController::class)->name('forgot');
-            Route::post('reset', ResetPasswordController::class)->name('reset');
-        });
+    // Public — anonymous visitors following a workflow share link.
+    Route::get('shared-workflows/{token}', ShowSharedWorkflowController::class)->name('shared-workflows.show');
 
-        Route::prefix('2fa')->as('2fa.')->group(function (): void {
-            Route::post('verify', VerifyTwoFactorController::class)->name('verify');
-        });
-
-        Route::prefix('social')->as('social.')->group(function (): void {
-            Route::get('{provider}/redirect', SocialRedirectController::class)->name('redirect');
-            Route::match(['GET', 'POST'], '{provider}/callback', SocialCallbackController::class)->name('callback');
-        });
-    });
-
-    // Authenticated.
-    Route::middleware('auth:api')->prefix('auth')->as('auth.')->group(function (): void {
-        Route::post('logout', LogoutController::class)->name('logout');
-        Route::post('logout-all', LogoutAllController::class)->name('logout-all');
-        Route::post('verify-email/resend', ResendVerificationController::class)->name('verify-email.resend');
-        Route::put('password/change', ChangePasswordController::class)->name('password.change');
-
-        Route::get('user', ShowUserController::class)->name('user.show');
-        Route::put('user', UpdateUserController::class)->name('user.update');
-        Route::delete('user', DeleteUserController::class)->name('user.destroy');
-
-        Route::prefix('2fa')->as('2fa.')->group(function (): void {
-            Route::post('enable', EnableTwoFactorController::class)->name('enable');
-            Route::post('confirm', ConfirmTwoFactorController::class)->name('confirm');
-            Route::post('disable', DisableTwoFactorController::class)->name('disable');
-            Route::get('recovery-codes', RecoveryCodesController::class)->name('recovery-codes');
-            Route::post('recovery-codes/regenerate', RegenerateRecoveryCodesController::class)->name('recovery-codes.regenerate');
-        });
-
-        Route::get('sessions', IndexSessionController::class)->name('sessions.index');
-        Route::delete('sessions/{id}', RevokeSessionController::class)->name('sessions.destroy');
-    });
+    require __DIR__.'/api/auth.php';
 
     Route::middleware(['auth:api', 'verified'])->group(function (): void {
+        require __DIR__.'/api/catalog.php';
+
+        Route::get('plans', [PlanController::class, 'index'])->name('plans.index');
+
         Route::get('workspaces/invitations/{token}/accept', AcceptInvitationController::class)
             ->middleware('signed')
             ->name('workspaces.invitations.accept');
 
         Route::prefix('workspaces')->as('workspaces.')->group(function (): void {
-            Route::get('/', [WorkspaceController::class, 'index'])->name('index');
-            Route::post('/', [WorkspaceController::class, 'store'])->name('store');
-            Route::get('{workspace}', [WorkspaceController::class, 'show'])->name('show');
-            Route::put('{workspace}', [WorkspaceController::class, 'update'])->name('update');
-            Route::delete('{workspace}', [WorkspaceController::class, 'destroy'])->name('destroy');
-            Route::post('{workspace}/avatar', [WorkspaceController::class, 'updateAvatar'])->name('avatar.update');
-            Route::get('{workspace}/invitations', [WorkspaceMemberController::class, 'invitations'])->name('invitations.index');
-
-            Route::prefix('{workspace}/members')->as('members.')->group(function (): void {
-                Route::get('/', [WorkspaceMemberController::class, 'index'])->name('index');
-                Route::post('invite', [WorkspaceMemberController::class, 'invite'])->name('invite');
-                Route::delete('leave', [WorkspaceMemberController::class, 'leave'])->name('leave');
-                Route::patch('{member}', [WorkspaceMemberController::class, 'updateRole'])->name('update-role');
-                Route::delete('{member}', [WorkspaceMemberController::class, 'destroy'])->name('destroy');
-            });
-
-            Route::prefix('{workspace}/notification-channels')->as('notification-channels.')->group(function (): void {
-                Route::get('/', [NotificationChannelController::class, 'index'])->name('index');
-                Route::post('/', [NotificationChannelController::class, 'store'])->name('store');
-                Route::put('{notificationChannel}', [NotificationChannelController::class, 'update'])->name('update');
-                Route::delete('{notificationChannel}', [NotificationChannelController::class, 'destroy'])->name('destroy');
-                Route::post('{notificationChannel}/test', [NotificationChannelController::class, 'test'])->name('test');
-            });
-
-            Route::prefix('{workspace}/notification-preferences')->as('notification-preferences.')->group(function (): void {
-                Route::get('/', [NotificationPreferenceController::class, 'index'])->name('index');
-                Route::put('/', [NotificationPreferenceController::class, 'upsert'])->name('upsert');
-            });
+            require __DIR__.'/api/workspaces.php';
         });
 
-        Route::prefix('notifications')->as('notifications.')->group(function (): void {
-            Route::get('/', [NotificationController::class, 'index'])->name('index');
-            Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
-            Route::post('mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
-            Route::post('{notification}/read', [NotificationController::class, 'markRead'])->name('read');
-            Route::delete('{notification}', [NotificationController::class, 'destroy'])->name('destroy');
+        // Every route below is scoped to a {workspace}; workspace.context resolves the
+        // workspace and the caller's role (or 404/403s) before any controller runs.
+        Route::prefix('workspaces')->as('workspaces.')->middleware('workspace.context')->group(function (): void {
+            require __DIR__.'/api/agents.php';
+            require __DIR__.'/api/agent-skills.php';
+            require __DIR__.'/api/tools.php';
+            require __DIR__.'/api/credentials.php';
+            require __DIR__.'/api/variables.php';
+            require __DIR__.'/api/nodes.php';
+            require __DIR__.'/api/workflows.php';
+            require __DIR__.'/api/runs.php';
+            require __DIR__.'/api/workflow-builder.php';
+            require __DIR__.'/api/billing.php';
         });
+
+        require __DIR__.'/api/notifications.php';
     });
 });

@@ -1,0 +1,30 @@
+meta {
+  name: Show Shared Workflow
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/shared-workflows/:token
+  body: none
+  auth: none
+}
+
+params:path {
+  token: abc123token
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Public route for anonymous visitors following a workflow share link. Records a
+  view against the share and returns the workflow's name, description, current
+  graph, and whether cloning is allowed. No authentication required.
+
+  Expected result:
+  - 200 with { name, description, graph, allow_clone }.
+  - 404 if no share matches the given token.
+  - 410 if the share link has expired.
+}

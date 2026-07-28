@@ -1,0 +1,30 @@
+meta {
+  name: Delete Node
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/nodes/:node
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  node: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a custom node. Only nodes with `is_custom = true` can be deleted — builtin
+  catalog nodes are read-only. Requires the `node.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the node is a builtin catalog node or the user lacks the `node.manage` permission.
+  - 404 if the node belongs to a different workspace.
+}

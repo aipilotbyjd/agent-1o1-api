@@ -1,0 +1,30 @@
+meta {
+  name: List Workflow Builder Messages
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflow-builder-sessions/:session/messages
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  session: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists a workflow builder session's messages in chronological order, paginated
+  (25 per page). Requires the `workflow.builder.use` permission.
+
+  Expected result:
+  - 200 with a paginated list of messages.
+  - 403 if the user lacks the `workflow.builder.use` permission.
+  - 404 if the session doesn't belong to this workspace.
+}

@@ -1,0 +1,42 @@
+meta {
+  name: Create Environment Release
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/environment-releases
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "environment_id": 1,
+    "version_id": 1,
+    "notes": "Promoting to staging for QA."
+  }
+}
+
+docs {
+  Records that a published workflow `version_id` was released to `environment_id`.
+  Both must belong to this workspace/workflow respectively. `notes` is optional.
+  `released_by` and `released_at` are set automatically. Requires the
+  `workflow.environment-release.manage` permission.
+
+  Expected result:
+  - 201 with the created release.
+  - 422 on validation errors (e.g. `environment_id`/`version_id` not found for this
+    workspace/workflow).
+  - 403 if the user lacks the `workflow.environment-release.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

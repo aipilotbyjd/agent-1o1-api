@@ -1,0 +1,41 @@
+meta {
+  name: Update Environment
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/environments/:environment
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  environment: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Staging (EU)",
+    "variables": {
+      "API_BASE_URL": "https://staging-eu.example.com"
+    },
+    "is_default": true
+  }
+}
+
+docs {
+  Updates a workspace environment. All fields are optional. `slug` cannot be changed
+  through this endpoint. Requires the `environment.manage` permission.
+
+  Expected result:
+  - 200 with the updated environment.
+  - 422 on validation errors.
+  - 403 if the authenticated user lacks the `environment.manage` permission.
+  - 404 if the environment doesn't belong to this workspace.
+}

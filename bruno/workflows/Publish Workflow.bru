@@ -1,0 +1,38 @@
+meta {
+  name: Publish Workflow
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/publish
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "notes": "Adds the CRM dedupe step before routing."
+  }
+}
+
+docs {
+  Snapshots the workflow's current draft graph as a new published version. The
+  workflow must have at least one step. `notes` is optional. Requires the
+  `workflow.publish` permission.
+
+  Expected result:
+  - 200 with the workflow, including `currentVersion`.
+  - 200-shaped error (`ApiResponse::error`) if the workflow has no steps yet.
+  - 403 if the user lacks the `workflow.publish` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

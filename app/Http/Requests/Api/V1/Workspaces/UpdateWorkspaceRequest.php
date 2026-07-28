@@ -2,7 +2,8 @@
 
 namespace App\Http\Requests\Api\V1\Workspaces;
 
-use App\Models\Workspace;
+use App\Enums\Workspaces\Permission;
+use App\Models\Workspaces\Workspace;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -14,10 +15,7 @@ class UpdateWorkspaceRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        /** @var Workspace $workspace */
-        $workspace = $this->route('workspace');
-
-        return $this->user()->hasWorkspaceRole($workspace, 'owner', 'admin');
+        return $this->user()->can(Permission::WorkspaceUpdate->value);
     }
 
     /**

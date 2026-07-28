@@ -1,0 +1,22 @@
+meta {
+  name: Get Unread Notification Count
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/notifications/unread-count
+  body: none
+  auth: inherit
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Returns the authenticated user's unread notification count. Not workspace-scoped.
+
+  Expected result:
+  - 200 with { unread: <int> }.
+}

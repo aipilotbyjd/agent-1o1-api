@@ -2,9 +2,10 @@
 
 use App\Mail\WorkspaceInvitationMail;
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceInvitation;
-use App\Models\WorkspaceMember;
+use App\Models\Workspaces\Workspace;
+use App\Models\Workspaces\WorkspaceInvitation;
+use App\Models\Workspaces\WorkspaceMember;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
 
@@ -57,6 +58,19 @@ it('allows an admin to invite a member and sends the invitation email', function
     $response->assertCreated();
     $this->assertDatabaseHas('workspace_invitations', ['workspace_id' => $workspace->id, 'email' => 'invitee@example.com']);
     Mail::assertQueued(WorkspaceInvitationMail::class);
+});
+
+it('rejects inviting a member with the owner role', function () {
+    $owner = User::factory()->create();
+    $workspace = Workspace::factory()->create(['owner_id' => $owner->id]);
+    WorkspaceMember::factory()->owner()->create(['workspace_id' => $workspace->id, 'user_id' => $owner->id]);
+
+    $response = $this->withToken(authHeader($owner))->postJson("/api/v1/workspaces/{$workspace->id}/members/invite", [
+        'email' => 'invitee@example.com',
+        'role' => 'owner',
+    ]);
+
+    $response->assertStatus(422);
 });
 
 it('forbids a regular member from inviting new members', function () {
@@ -208,4 +222,49 @@ it('prevents the owner from leaving the workspace', function () {
     $response = $this->withToken(authHeader($owner))->deleteJson("/api/v1/workspaces/{$workspace->id}/members/leave");
 
     $response->assertForbidden();
+});
+
+it('reflects a role update immediately, without waiting for the cache to expire', function () {
+    $owner = User::factory()->create();
+    $memberUser = User::factory()->create();
+    $workspace = Workspace::factory()->create(['owner_id' => $owner->id]);
+    WorkspaceMember::factory()->owner()->create(['workspace_id' => $workspace->id, 'user_id' => $owner->id]);
+    $member = WorkspaceMember::factory()->member()->create(['workspace_id' => $workspace->id, 'user_id' => $memberUser->id]);
+
+    // Prime the cache for the member's current (pre-promotion) role.
+    $this->withToken(authHeader($memberUser))->getJson("/api/v1/workspaces/{$workspace->id}")->assertOk();
+
+    // Passport's token guard caches the resolved user for the lifetime of the test's
+    // container, so switching actors mid-test requires forgetting the cached guard state.
+    Auth::forgetGuards();
+
+    $this->withToken(authHeader($owner))->patchJson("/api/v1/workspaces/{$workspace->id}/members/{$member->id}", [
+        'role' => 'admin',
+    ])->assertOk();
+
+    Auth::forgetGuards();
+
+    // Now-admin should immediately be able to perform an admin-only action, no TTL wait.
+    $this->withToken(authHeader($memberUser))
+        ->putJson("/api/v1/workspaces/{$workspace->id}", ['name' => 'Renamed by new admin'])
+        ->assertOk();
+});
+
+it('revokes access immediately after a member is removed', function () {
+    $owner = User::factory()->create();
+    $memberUser = User::factory()->create();
+    $workspace = Workspace::factory()->create(['owner_id' => $owner->id]);
+    WorkspaceMember::factory()->owner()->create(['workspace_id' => $workspace->id, 'user_id' => $owner->id]);
+    $member = WorkspaceMember::factory()->member()->create(['workspace_id' => $workspace->id, 'user_id' => $memberUser->id]);
+
+    // Prime the cache for the member.
+    $this->withToken(authHeader($memberUser))->getJson("/api/v1/workspaces/{$workspace->id}")->assertOk();
+
+    Auth::forgetGuards();
+
+    $this->withToken(authHeader($owner))->deleteJson("/api/v1/workspaces/{$workspace->id}/members/{$member->id}")->assertOk();
+
+    Auth::forgetGuards();
+
+    $this->withToken(authHeader($memberUser))->getJson("/api/v1/workspaces/{$workspace->id}")->assertForbidden();
 });

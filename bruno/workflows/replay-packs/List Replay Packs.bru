@@ -1,0 +1,30 @@
+meta {
+  name: List Replay Packs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/replay-packs
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the workflow's saved run replay packs, most recently created first. Requires
+  the `run.replay-pack.view` permission.
+
+  Expected result:
+  - 200 with an array of replay packs.
+  - 403 if the user lacks the `run.replay-pack.view` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

@@ -1,0 +1,53 @@
+meta {
+  name: Create Contract Snapshot
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/contract-snapshots
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "version_id": 1,
+    "input_schema": {
+      "lead_email": "string"
+    },
+    "output_schema": {
+      "status": "string"
+    }
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("contractSnapshotId", res.body.data.id);
+  }
+}
+
+docs {
+  Captures a contract snapshot for the workflow — `input_schema`, `output_schema`,
+  and `node_signature` are all optional; when `node_signature` is omitted it is
+  computed automatically from the workflow's current graph, and `version_id` defaults
+  to the workflow's current published version if omitted. `version_id`, if given,
+  must belong to this workflow. Requires the `workflow.contract-snapshot.manage`
+  permission.
+
+  Expected result:
+  - 201 with the created contract snapshot.
+  - 422 on validation errors (e.g. `version_id` not found for this workflow).
+  - 403 if the user lacks the `workflow.contract-snapshot.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

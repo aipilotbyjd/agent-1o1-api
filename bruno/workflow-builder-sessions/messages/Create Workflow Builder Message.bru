@@ -1,0 +1,40 @@
+meta {
+  name: Create Workflow Builder Message
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflow-builder-sessions/:session/messages
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  session: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "content": "Add a step that sends a Slack message when the form is submitted."
+  }
+}
+
+docs {
+  Persists the user's message as `pending` and queues a background job
+  (ProcessWorkflowBuilderMessage) to drive the builder agent, produce the assistant's
+  reply, and update the session's draft graph. The reply is not returned
+  synchronously — poll "List Workflow Builder Messages" or listen for the resulting
+  update. Requires the `workflow.builder.use` permission.
+
+  Expected result:
+  - 201 with the created (pending) message.
+  - 422 on validation errors (missing `content`).
+  - 403 if the user lacks the `workflow.builder.use` permission.
+  - 404 if the session doesn't belong to this workspace.
+}

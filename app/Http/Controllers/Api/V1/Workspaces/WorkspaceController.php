@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1\Workspaces;
 
+use App\Enums\Workspaces\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Workspaces\StoreWorkspaceRequest;
 use App\Http\Requests\Api\V1\Workspaces\UpdateWorkspaceAvatarRequest;
 use App\Http\Requests\Api\V1\Workspaces\UpdateWorkspaceRequest;
-use App\Http\Resources\V1\WorkspaceResource;
+use App\Http\Resources\V1\Workspaces\WorkspaceResource;
 use App\Http\Responses\ApiResponse;
-use App\Models\Workspace;
-use App\Services\WorkspaceService;
+use App\Models\Workspaces\Workspace;
+use App\Services\Workspaces\WorkspaceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,6 +34,8 @@ class WorkspaceController extends Controller
 
     public function show(Workspace $workspace): JsonResponse
     {
+        $this->requirePermission(Permission::WorkspaceView);
+
         return ApiResponse::success(new WorkspaceResource($workspace->load('owner')));
     }
 
@@ -45,9 +48,7 @@ class WorkspaceController extends Controller
 
     public function destroy(Request $request, Workspace $workspace): JsonResponse
     {
-        if (! $request->user()->hasWorkspaceRole($workspace, 'owner')) {
-            return ApiResponse::forbidden('Only the workspace owner can delete this workspace.');
-        }
+        $this->requirePermission(Permission::WorkspaceDelete);
 
         $this->workspaceService->delete($workspace);
 

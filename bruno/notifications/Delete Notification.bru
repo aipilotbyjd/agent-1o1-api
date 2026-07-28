@@ -1,0 +1,28 @@
+meta {
+  name: Delete Notification
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/notifications/:notification
+  body: none
+  auth: inherit
+}
+
+params:path {
+  notification: 9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a single notification. Not workspace-scoped; only matches notifications
+  belonging to the authenticated user.
+
+  Expected result:
+  - 200 on success.
+  - 404 if the notification doesn't belong to the authenticated user.
+}

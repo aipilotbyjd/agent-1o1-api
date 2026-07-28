@@ -1,0 +1,29 @@
+meta {
+  name: Get Template Collection
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/template-collections/:key
+  body: none
+  auth: inherit
+}
+
+params:path {
+  key: lead-qualification
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single template collection by id or slug, including its templates. Global,
+  read-only catalog — not workspace-scoped, but still requires an authenticated +
+  verified user.
+
+  Expected result:
+  - 200 with the template collection and its templates.
+  - 404 if no collection matches the given id or slug.
+}

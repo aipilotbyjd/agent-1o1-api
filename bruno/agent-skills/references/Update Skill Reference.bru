@@ -1,0 +1,39 @@
+meta {
+  name: Update Skill Reference
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills/:skill/references/:reference
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  skill: 1
+  reference: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "title": "Order Status Codes",
+    "content": "pending, processing, shipped, delivered, cancelled, refunded",
+    "sort_order": 1
+  }
+}
+
+docs {
+  Updates a skill reference. Requires the `agent-skill-reference.manage` permission.
+
+  Expected result:
+  - 200 with the updated reference.
+  - 422 on validation errors.
+  - 403 if the user lacks the `agent-skill-reference.manage` permission.
+  - 404 if the reference doesn't belong to this skill.
+}

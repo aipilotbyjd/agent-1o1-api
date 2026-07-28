@@ -1,9 +1,9 @@
 <?php
 
 use App\Models\User;
-use App\Models\Workspace;
-use App\Models\WorkspaceInvitation;
-use App\Models\WorkspaceMember;
+use App\Models\Workspaces\Workspace;
+use App\Models\Workspaces\WorkspaceInvitation;
+use App\Models\Workspaces\WorkspaceMember;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -39,6 +39,17 @@ it('shows a workspace', function () {
     $response = $this->withToken(authHeader($user))->getJson("/api/v1/workspaces/{$workspace->id}");
 
     $response->assertOk()->assertJsonPath('data.id', $workspace->id);
+});
+
+it('forbids a non-member from viewing a workspace', function () {
+    $owner = User::factory()->create();
+    $outsider = User::factory()->create();
+    $workspace = Workspace::factory()->create(['owner_id' => $owner->id]);
+    WorkspaceMember::factory()->owner()->create(['workspace_id' => $workspace->id, 'user_id' => $owner->id]);
+
+    $response = $this->withToken(authHeader($outsider))->getJson("/api/v1/workspaces/{$workspace->id}");
+
+    $response->assertForbidden();
 });
 
 it('allows an admin to update the workspace', function () {

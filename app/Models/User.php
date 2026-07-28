@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Credentials\OAuthConnection;
+use App\Models\Workspaces\Workspace;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -50,15 +52,6 @@ class User extends Authenticatable implements MustVerifyEmail, OAuthenticatable
         return $this->belongsToMany(Workspace::class, 'workspace_members')
             ->withPivot('role', 'joined_at')
             ->withTimestamps();
-    }
-
-    public function hasWorkspaceRole(Workspace $workspace, string ...$roles): bool
-    {
-        return WorkspaceMember::query()
-            ->where('workspace_id', $workspace->id)
-            ->where('user_id', $this->id)
-            ->whereIn('role', $roles)
-            ->exists();
     }
 
     /**

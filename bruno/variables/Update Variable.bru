@@ -1,0 +1,38 @@
+meta {
+  name: Update Variable
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/variables/:variable
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  variable: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "value": "America/New_York",
+    "is_secret": false
+  }
+}
+
+docs {
+  Updates a variable's value and/or secret flag. `key` cannot be changed after
+  creation. Requires the `variable.manage` permission.
+
+  Expected result:
+  - 200 with the updated variable.
+  - 422 on validation errors.
+  - 403 if the user lacks the `variable.manage` permission.
+  - 404 if the variable doesn't belong to this workspace.
+}

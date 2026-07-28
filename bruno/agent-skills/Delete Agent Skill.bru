@@ -1,0 +1,29 @@
+meta {
+  name: Delete Agent Skill
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agent-skills/:skill
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  skill: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes an agent skill. Requires the `agent-skill.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `agent-skill.manage` permission.
+  - 404 if the skill doesn't belong to this workspace.
+}
