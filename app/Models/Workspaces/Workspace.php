@@ -17,7 +17,9 @@ use App\Models\Runs\RunReplayPack;
 use App\Models\Tool;
 use App\Models\User;
 use App\Models\Variable;
+use App\Models\Workflows\Folder;
 use App\Models\Workflows\GitSyncConfig;
+use App\Models\Workflows\Tag;
 use App\Models\Workflows\Workflow;
 use App\Models\Workflows\WorkflowApproval;
 use App\Models\Workflows\WorkflowBuilderSession;
@@ -108,6 +110,30 @@ class Workspace extends Model
     public function workflows(): HasMany
     {
         return $this->hasMany(Workflow::class);
+    }
+
+    /**
+     * @return HasMany<LogStreamingConfig, $this>
+     */
+    public function logStreamingConfigs(): HasMany
+    {
+        return $this->hasMany(LogStreamingConfig::class);
+    }
+
+    /**
+     * @return HasMany<Folder, $this>
+     */
+    public function folders(): HasMany
+    {
+        return $this->hasMany(Folder::class);
+    }
+
+    /**
+     * @return HasMany<Tag, $this>
+     */
+    public function tags(): HasMany
+    {
+        return $this->hasMany(Tag::class);
     }
 
     /**

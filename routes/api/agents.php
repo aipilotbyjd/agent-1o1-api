@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Agents\AgentAnalyticsController;
 use App\Http\Controllers\Api\V1\Agents\AgentController;
+use App\Http\Controllers\Api\V1\Agents\AgentEvalCaseController;
+use App\Http\Controllers\Api\V1\Agents\AgentEvalRunController;
+use App\Http\Controllers\Api\V1\Agents\AgentEvalSuiteController;
 use App\Http\Controllers\Api\V1\Agents\AgentKnowledgeController;
 use App\Http\Controllers\Api\V1\Agents\AgentMemoryController;
 use App\Http\Controllers\Api\V1\Agents\AgentTemplateController;
@@ -23,6 +27,18 @@ Route::prefix('{workspace}/agents')->as('agents.')->group(function (): void {
     Route::post('{agent}/chat', ChatAgentController::class)->name('chat');
     Route::put('{agent}/tools', SyncAgentToolsController::class)->name('tools.sync');
     Route::put('{agent}/skills', SyncAgentSkillsController::class)->name('skills.sync');
+    Route::get('{agent}/analytics', AgentAnalyticsController::class)->name('analytics');
+
+    Route::prefix('{agent}/eval-suites')->as('eval-suites.')->group(function (): void {
+        Route::get('/', [AgentEvalSuiteController::class, 'index'])->name('index');
+        Route::post('/', [AgentEvalSuiteController::class, 'store'])->name('store');
+        Route::get('{evalSuite}', [AgentEvalSuiteController::class, 'show'])->name('show');
+        Route::delete('{evalSuite}', [AgentEvalSuiteController::class, 'destroy'])->name('destroy');
+        Route::post('{evalSuite}/cases', [AgentEvalCaseController::class, 'store'])->name('cases.store');
+        Route::delete('{evalSuite}/cases/{case}', [AgentEvalCaseController::class, 'destroy'])->name('cases.destroy');
+        Route::get('{evalSuite}/runs', [AgentEvalRunController::class, 'index'])->name('runs.index');
+        Route::post('{evalSuite}/run', [AgentEvalRunController::class, 'store'])->name('runs.store');
+    });
 
     Route::prefix('{agent}/versions')->as('versions.')->group(function (): void {
         Route::get('/', [AgentVersionController::class, 'index'])->name('index');

@@ -93,6 +93,14 @@ class Agent extends Model
     }
 
     /**
+     * @return HasMany<AgentEvalSuite, $this>
+     */
+    public function evalSuites(): HasMany
+    {
+        return $this->hasMany(AgentEvalSuite::class);
+    }
+
+    /**
      * @return BelongsToMany<AgentSkill, $this>
      */
     public function skills(): BelongsToMany

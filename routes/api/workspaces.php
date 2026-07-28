@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\Api\V1\Notifications\NotificationChannelController;
 use App\Http\Controllers\Api\V1\Notifications\NotificationPreferenceController;
+use App\Http\Controllers\Api\V1\Workspaces\AiGenerationLogController;
 use App\Http\Controllers\Api\V1\Workspaces\DocumentEmbeddingController;
 use App\Http\Controllers\Api\V1\Workspaces\GitSyncConfigController;
+use App\Http\Controllers\Api\V1\Workspaces\LogStreamingConfigController;
 use App\Http\Controllers\Api\V1\Workspaces\WorkspaceController;
+use App\Http\Controllers\Api\V1\Workspaces\WorkspaceDashboardController;
 use App\Http\Controllers\Api\V1\Workspaces\WorkspaceEnvironmentController;
 use App\Http\Controllers\Api\V1\Workspaces\WorkspaceMemberController;
 use App\Http\Controllers\Api\V1\Workspaces\WorkspaceUsageController;
@@ -22,6 +25,16 @@ Route::middleware('workspace.context')->group(function (): void {
     Route::post('{workspace}/avatar', [WorkspaceController::class, 'updateAvatar'])->name('avatar.update');
     Route::get('{workspace}/invitations', [WorkspaceMemberController::class, 'invitations'])->name('invitations.index');
     Route::get('{workspace}/usage', WorkspaceUsageController::class)->name('usage');
+    Route::get('{workspace}/ai-generation-logs', [AiGenerationLogController::class, 'index'])->name('ai-generation-logs.index');
+    Route::get('{workspace}/dashboard', WorkspaceDashboardController::class)->name('dashboard');
+
+    Route::prefix('{workspace}/log-streaming-configs')->as('log-streaming-configs.')->group(function (): void {
+        Route::get('/', [LogStreamingConfigController::class, 'index'])->name('index');
+        Route::post('/', [LogStreamingConfigController::class, 'store'])->name('store');
+        Route::put('{logStreamingConfig}', [LogStreamingConfigController::class, 'update'])->name('update');
+        Route::delete('{logStreamingConfig}', [LogStreamingConfigController::class, 'destroy'])->name('destroy');
+        Route::post('{logStreamingConfig}/test', [LogStreamingConfigController::class, 'test'])->name('test');
+    });
 
     Route::prefix('{workspace}/members')->as('members.')->group(function (): void {
         Route::get('/', [WorkspaceMemberController::class, 'index'])->name('index');

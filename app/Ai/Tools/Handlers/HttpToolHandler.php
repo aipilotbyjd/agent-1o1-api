@@ -4,10 +4,12 @@ namespace App\Ai\Tools\Handlers;
 
 use App\Models\Credentials\Credential;
 use App\Models\Tool;
+use App\Services\Runs\ConnectorMetricRecorder;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Throwable;
 
 class HttpToolHandler implements ToolHandler
 {
@@ -26,13 +28,33 @@ class HttpToolHandler implements ToolHandler
 
         $request = $this->applyCredential($request, $tool);
 
-        $response = $method === 'GET'
-            ? $request->get($config['url'], $arguments)
-            : $request->send($method, $config['url'], ['json' => $arguments]);
+        $startedAt = microtime(true);
+
+        try {
+            $response = $method === 'GET'
+                ? $request->get($config['url'], $arguments)
+                : $request->send($method, $config['url'], ['json' => $arguments]);
+        } catch (Throwable $exception) {
+            $this->recordMetric($tool, false, $startedAt);
+
+            throw $exception;
+        }
+
+        $this->recordMetric($tool, $response->successful(), $startedAt);
 
         return Str::limit(
             "HTTP {$response->status()}\n".$response->body(),
             self::MAX_RESPONSE_LENGTH,
+        );
+    }
+
+    private function recordMetric(Tool $tool, bool $success, float $startedAt): void
+    {
+        app(ConnectorMetricRecorder::class)->record(
+            $tool->workspace_id,
+            $tool->slug ?? $tool->name,
+            $success,
+            (int) round((microtime(true) - $startedAt) * 1000),
         );
     }
 

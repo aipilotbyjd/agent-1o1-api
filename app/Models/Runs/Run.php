@@ -89,6 +89,14 @@ class Run extends Model
     }
 
     /**
+     * @return HasMany<RunFixSuggestion, $this>
+     */
+    public function fixSuggestions(): HasMany
+    {
+        return $this->hasMany(RunFixSuggestion::class);
+    }
+
+    /**
      * @return BelongsTo<User, $this>
      */
     public function triggeredBy(): BelongsTo

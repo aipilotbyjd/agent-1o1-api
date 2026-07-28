@@ -48,6 +48,10 @@ enum Permission: string
     case AgentSkillScriptManage = 'agent.skill-script.manage';
     case AgentVersionView = 'agent.version.view';
     case AgentVersionManage = 'agent.version.manage';
+    case AgentEvalView = 'agent.eval.view';
+    case AgentEvalManage = 'agent.eval.manage';
+    case AgentEvalRun = 'agent.eval.run';
+    case AgentAnalyticsView = 'agent.analytics.view';
 
     // Tools / Nodes / Credentials / Variables
     case ToolView = 'tool.view';
@@ -114,6 +118,8 @@ enum Permission: string
             self::AgentSkillReferenceView,
             self::AgentSkillScriptView,
             self::AgentVersionView,
+            self::AgentEvalView,
+            self::AgentAnalyticsView,
             self::ToolView,
             self::NodeView,
             self::CredentialView,
@@ -143,6 +149,7 @@ enum Permission: string
         return [
             self::AgentChat,
             self::AgentTemplateUse,
+            self::AgentEvalRun,
             self::WorkflowCloneShared,
             self::WorkflowBuilderUse,
             self::WorkflowTemplateUse,
@@ -166,6 +173,7 @@ enum Permission: string
             self::AgentSkillReferenceManage,
             self::AgentSkillScriptManage,
             self::AgentVersionManage,
+            self::AgentEvalManage,
             self::ToolManage,
             self::NodeManage,
             self::VariableManage,
