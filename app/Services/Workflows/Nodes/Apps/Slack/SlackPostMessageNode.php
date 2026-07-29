@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Services\Workflows\Nodes\Connectors;
+namespace App\Services\Workflows\Nodes\Apps\Slack;
 
 use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Runs\ConnectorMetricRecorder;
+use App\Services\Workflows\Nodes\Core\HttpRequestNode;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
 use Illuminate\Support\Facades\Http;

@@ -5,10 +5,10 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\ConnectorMetric;
 use App\Models\Runs\Run;
 use App\Models\Workspaces\Workspace;
-use App\Services\Workflows\Nodes\Connectors\CodeExpressionNode;
-use App\Services\Workflows\Nodes\Connectors\EmailSendNode;
-use App\Services\Workflows\Nodes\Connectors\HttpRequestNode;
-use App\Services\Workflows\Nodes\Connectors\SlackPostMessageNode;
+use App\Services\Workflows\Nodes\Apps\Mail\EmailSendNode;
+use App\Services\Workflows\Nodes\Apps\Slack\SlackPostMessageNode;
+use App\Services\Workflows\Nodes\Core\CodeNode;
+use App\Services\Workflows\Nodes\Core\HttpRequestNode;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 
@@ -167,7 +167,7 @@ describe('code.expression', function () {
     it('computes named values from the run context', function () {
         $run = connectorRun();
 
-        $output = app(CodeExpressionNode::class)->execute($run, [
+        $output = app(CodeNode::class)->execute($run, [
             'expressions' => [
                 'total' => 'input.price * input.quantity',
                 'label' => "upper(input.name) + ' x' + number(input.quantity)",

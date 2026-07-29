@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Workflows\Nodes\Connectors;
+namespace App\Services\Workflows\Nodes\Core;
 
 use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Runs\Run;
@@ -16,7 +16,7 @@ use App\Services\Workflows\Nodes\NodeDefinition;
  * any workspace member execution on the application host. See ExpressionEvaluator for
  * the complete set of operations available.
  */
-class CodeExpressionNode extends NodeDefinition implements ExecutableNode
+class CodeNode extends NodeDefinition implements ExecutableNode
 {
     public function type(): string
     {

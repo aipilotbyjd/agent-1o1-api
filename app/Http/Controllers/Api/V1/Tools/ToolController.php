@@ -10,7 +10,7 @@ use App\Http\Resources\V1\Tools\ToolResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tool;
 use App\Models\Workspaces\Workspace;
-use App\Services\Workflows\Nodes\Connectors\CustomHttpNode;
+use App\Services\Workflows\Nodes\Core\CustomHttpNode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;

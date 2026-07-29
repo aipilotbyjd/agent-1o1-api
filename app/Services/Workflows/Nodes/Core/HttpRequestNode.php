@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Workflows\Nodes\Connectors;
+namespace App\Services\Workflows\Nodes\Core;
 
 use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Credentials\Credential;

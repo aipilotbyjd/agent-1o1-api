@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Workflows\Nodes\Core;
+namespace App\Services\Workflows\Nodes\Flow;
 
 use App\Enums\Workflows\WorkflowStepType;
 use App\Services\Workflows\Nodes\NodeDefinition;

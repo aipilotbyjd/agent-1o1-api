@@ -4,7 +4,7 @@ namespace App\Ai\Tools;
 
 use App\Models\Runs\Run;
 use App\Models\Tool as ToolModel;
-use App\Services\Workflows\Nodes\Connectors\CustomHttpNode;
+use App\Services\Workflows\Nodes\Core\CustomHttpNode;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Ai\Contracts\Tool;

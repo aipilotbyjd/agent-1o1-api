@@ -9,7 +9,7 @@ use App\Models\Workspaces\LogStreamingConfig;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
 use App\Services\Runs\ConnectorMetricRecorder;
-use App\Services\Workflows\Nodes\Connectors\CustomHttpNode;
+use App\Services\Workflows\Nodes\Core\CustomHttpNode;
 use Illuminate\Support\Facades\Http;
 
 function obsSetup(string $role = 'admin'): array
