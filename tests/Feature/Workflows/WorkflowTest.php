@@ -94,9 +94,13 @@ it('refuses to publish an empty workflow', function () {
     [$user, $workspace] = workflowWorkspace();
     $workflow = Workflow::factory()->create(['workspace_id' => $workspace->id]);
 
+    // Graph problems come back as validation errors, keyed so the builder can surface
+    // each issue against the step it belongs to.
     $this->withToken(authHeader($user))->postJson(
         "/api/v1/workspaces/{$workspace->id}/workflows/{$workflow->id}/publish",
-    )->assertStatus(400);
+    )
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.graph.0', 'The graph has no steps.');
 });
 
 it('publishes a workflow with steps', function () {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\Workflows\InvalidGraphException;
 use App\Http\Middleware\ResolveWorkspaceContext;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -35,6 +36,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return ApiResponse::validationError($e->errors(), $e->getMessage());
+            }
+        });
+
+        // An invalid graph is bad input, not a server fault — it reports which steps or
+        // edges are wrong so the builder can show them against the offending step.
+        $exceptions->render(function (InvalidGraphException $e, Request $request) {
+            if ($request->is('api/*')) {
+                return ApiResponse::validationError(['graph' => $e->issues], 'The workflow graph is invalid.');
             }
         });
 

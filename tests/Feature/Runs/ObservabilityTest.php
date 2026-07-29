@@ -1,6 +1,5 @@
 <?php
 
-use App\Ai\Tools\Handlers\HttpToolHandler;
 use App\Models\Runs\ConnectorMetric;
 use App\Models\Runs\Run;
 use App\Models\Tool;
@@ -10,6 +9,7 @@ use App\Models\Workspaces\LogStreamingConfig;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
 use App\Services\Runs\ConnectorMetricRecorder;
+use App\Services\Workflows\Nodes\Connectors\CustomHttpNode;
 use Illuminate\Support\Facades\Http;
 
 function obsSetup(string $role = 'admin'): array
@@ -43,7 +43,7 @@ it('records a connector metric when an http tool runs', function () {
         'config' => ['method' => 'GET', 'url' => 'https://api.example.test/data'],
     ]);
 
-    app(HttpToolHandler::class)->execute($tool, []);
+    app(CustomHttpNode::class)->call($tool, []);
 
     expect(ConnectorMetric::query()->where('workspace_id', $workspace->id)->exists())->toBeTrue();
 });

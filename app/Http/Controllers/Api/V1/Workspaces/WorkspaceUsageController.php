@@ -42,7 +42,9 @@ class WorkspaceUsageController extends Controller
             $totals['total_tokens'] += $prompt + $completion;
             $totals['steps']++;
 
-            $runnableKey = class_basename((string) $step->run->runnable_type).':'.$step->run->runnable_id;
+            // runnable_type is already a stable morph-map alias (e.g. "agent"), so it is
+            // used verbatim — running class_basename() over an alias is a no-op at best.
+            $runnableKey = $step->run->runnable_type.':'.$step->run->runnable_id;
             $byRunnable[$runnableKey] = ($byRunnable[$runnableKey] ?? 0) + $prompt + $completion;
 
             $day = $step->created_at->toDateString();

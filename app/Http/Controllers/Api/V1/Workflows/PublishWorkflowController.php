@@ -19,10 +19,6 @@ class PublishWorkflowController extends Controller
 
         $this->requirePermission(Permission::WorkflowPublish);
 
-        if ($workflow->steps()->doesntExist()) {
-            return ApiResponse::error('A workflow needs at least one step before it can be published.');
-        }
-
         $validated = $request->validate([
             'notes' => ['sometimes', 'nullable', 'string', 'max:500'],
         ]);

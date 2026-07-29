@@ -14,6 +14,7 @@ use App\Models\Workflows\Workflow;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
 use App\Observers\WorkspaceMemberObserver;
+use App\Services\Runs\SecretRedactor;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -35,7 +36,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Memoizes decrypted secrets per workspace, so a run that logs many lines
+        // decrypts each credential once instead of once per line.
+        $this->app->singleton(SecretRedactor::class);
     }
 
     /**

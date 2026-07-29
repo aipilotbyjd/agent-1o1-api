@@ -2,11 +2,15 @@
 
 namespace App\Models\Workflows;
 
+use App\Exceptions\Workflows\InvalidGraphException;
 use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
 use App\Models\Runs\RunReplayPack;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
+use App\Services\Workflows\GraphValidator;
+use App\Services\Workflows\Nodes\ConfigSchemaValidator;
+use App\Services\Workflows\Nodes\StepNodeResolver;
 use Database\Factories\Workflows\WorkflowFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -198,14 +202,42 @@ class Workflow extends Model
      */
     public function replaceGraph(array $steps, array $edges): void
     {
-        DB::transaction(function () use ($steps, $edges): void {
+        $resolver = app(StepNodeResolver::class);
+        $validator = app(ConfigSchemaValidator::class);
+
+        // Each step's config is checked against its node's schema here, at the point it
+        // enters the draft — the schemas stop being decorative and a malformed step is
+        // rejected while the author is still looking at it.
+        $issues = [];
+
+        foreach ($steps as $stepData) {
+            $definition = $resolver->definitionFor($stepData);
+
+            if ($definition === null) {
+                $issues[] = "Step [{$stepData['key']}] has no matching node for type [{$stepData['type']}].";
+
+                continue;
+            }
+
+            $issues = [...$issues, ...$validator->issues(
+                $definition->configSchema(),
+                $stepData['config'] ?? [],
+                (string) $stepData['key'],
+            )];
+        }
+
+        if ($issues !== []) {
+            throw new InvalidGraphException($issues);
+        }
+
+        DB::transaction(function () use ($steps, $edges, $resolver): void {
             $this->edges()->delete();
             $this->steps()->delete();
 
-            $nodeIdsByStepType = Node::query()
+            $nodeIdsByType = Node::query()
                 ->whereNull('workspace_id')
                 ->where('is_custom', false)
-                ->pluck('id', 'step_type');
+                ->pluck('id', 'type');
 
             $stepsByKey = [];
 
@@ -213,7 +245,7 @@ class Workflow extends Model
                 $stepsByKey[$stepData['key']] = $this->steps()->create([
                     'key' => $stepData['key'],
                     'type' => $stepData['type'],
-                    'node_id' => $nodeIdsByStepType[$stepData['type']] ?? null,
+                    'node_id' => $nodeIdsByType[$resolver->typeFor($stepData)] ?? null,
                     'config' => $stepData['config'] ?? [],
                     'position' => $stepData['position'] ?? null,
                 ]);
@@ -236,6 +268,15 @@ class Workflow extends Model
      */
     public function publishVersion(?User $publishedBy = null, ?string $notes = null): WorkflowVersion
     {
+        $graph = $this->graphArray();
+        $issues = app(GraphValidator::class)->issues($graph);
+
+        // Publishing is the last point where the author is still looking at the graph;
+        // an invalid shape past here becomes a run that hangs rather than an error.
+        if ($issues !== []) {
+            throw new InvalidGraphException($issues);
+        }
+
         return DB::transaction(function () use ($publishedBy, $notes): WorkflowVersion {
             $version = $this->versions()->create([
                 'version' => ((int) $this->versions()->max('version')) + 1,

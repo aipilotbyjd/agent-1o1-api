@@ -2,8 +2,8 @@
 
 namespace App\Ai\Tools\WorkflowBuilder;
 
-use App\Models\Nodes\Node;
 use App\Models\Workflows\WorkflowBuilderSession;
+use App\Services\Workflows\Nodes\NodeRegistry;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Ai\Contracts\Tool;
@@ -21,28 +21,32 @@ class InspectNodeSchemaTool implements Tool
 
     public function description(): Stringable|string
     {
-        return 'Get the config/input/output JSON schema for a node step type, so you know which fields to set in a step\'s "config" when adding or updating it.';
+        return 'Get the config and output schema for a node, so you know exactly which fields to set in a step\'s "config". Takes the node "type" from list_available_nodes.';
     }
 
+    /**
+     * Keyed on the node type rather than the step type: several nodes share a step type
+     * (every connector is a "tool" step), so a step-type lookup would be ambiguous.
+     */
     public function handle(Request $request): Stringable|string
     {
-        $stepType = (string) ($request->all()['step_type'] ?? '');
+        $type = (string) ($request->all()['node_type'] ?? '');
+        $registry = app(NodeRegistry::class);
 
-        $node = Node::query()
-            ->where('step_type', $stepType)
-            ->where(fn ($query) => $query->whereNull('workspace_id')->orWhere('workspace_id', $this->session->workspace_id))
-            ->first();
-
-        if ($node === null) {
-            return "No node found for step type [{$stepType}]. Use list_available_nodes to see valid types.";
+        if (! $registry->has($type)) {
+            return "No node found with type [{$type}]. Use list_available_nodes to see valid types.";
         }
 
+        $node = $registry->get($type);
+
         return json_encode([
-            'type' => $node->step_type->value,
-            'name' => $node->name,
-            'config_schema' => $node->config_schema,
-            'input_schema' => $node->input_schema,
-            'output_schema' => $node->output_schema,
+            'type' => $node->type(),
+            'step_type' => $node->stepType()->value,
+            'name' => $node->name(),
+            'description' => $node->description(),
+            'config_schema' => $node->configSchema(),
+            'output_schema' => $node->outputSchema(),
+            'credential_type' => $node->credentialType(),
         ], JSON_THROW_ON_ERROR);
     }
 
@@ -52,7 +56,9 @@ class InspectNodeSchemaTool implements Tool
     public function schema(JsonSchema $schema): array
     {
         return [
-            'step_type' => $schema->string()->description('The step type to inspect, e.g. "tool" or "condition".')->required(),
+            'node_type' => $schema->string()
+                ->description('The node type to inspect, e.g. "slack.post_message" or "core.condition".')
+                ->required(),
         ];
     }
 }

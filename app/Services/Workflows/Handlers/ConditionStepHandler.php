@@ -18,21 +18,84 @@ class ConditionStepHandler implements StepHandler
     {
         $config = $step['config'] ?? [];
 
-        $left = $this->templates->resolve($config['field'] ?? '', $context);
+        // The typed value is used for comparisons so a numeric field compares as a
+        // number, while the string form backs the text operators.
+        $left = $this->templates->resolveValue($config['field'] ?? '', $context);
+        $leftString = is_scalar($left) ? (string) $left : (string) json_encode($left);
         $operator = $config['operator'] ?? 'truthy';
-        $right = (string) ($config['value'] ?? '');
+        $right = $config['value'] ?? '';
+        $rightString = is_scalar($right) ? (string) $right : (string) json_encode($right);
 
         $result = match ($operator) {
-            'equals' => $left === $right,
-            'not_equals' => $left !== $right,
-            'contains' => str_contains($left, $right),
-            'gt' => is_numeric($left) && (float) $left > (float) $right,
-            'gte' => is_numeric($left) && (float) $left >= (float) $right,
-            'lt' => is_numeric($left) && (float) $left < (float) $right,
-            'lte' => is_numeric($left) && (float) $left <= (float) $right,
-            default => filter_var($left, FILTER_VALIDATE_BOOLEAN) || is_numeric($left) && (float) $left !== 0.0,
+            'equals' => $leftString === $rightString,
+            'not_equals' => $leftString !== $rightString,
+            'contains' => is_array($left)
+                ? in_array($right, $left, false)
+                : str_contains($leftString, $rightString),
+            'not_contains' => is_array($left)
+                ? ! in_array($right, $left, false)
+                : ! str_contains($leftString, $rightString),
+            'starts_with' => str_starts_with($leftString, $rightString),
+            'ends_with' => str_ends_with($leftString, $rightString),
+            'matches' => $this->matches($leftString, $rightString),
+            'in' => in_array($leftString, $this->listFrom($right), true),
+            'not_in' => ! in_array($leftString, $this->listFrom($right), true),
+            'exists' => $left !== null,
+            'missing' => $left === null,
+            'empty' => $left === null || $left === '' || $left === [],
+            'not_empty' => ! ($left === null || $left === '' || $left === []),
+            'gt' => $this->compareNumeric($left, $right, fn (float $a, float $b): bool => $a > $b),
+            'gte' => $this->compareNumeric($left, $right, fn (float $a, float $b): bool => $a >= $b),
+            'lt' => $this->compareNumeric($left, $right, fn (float $a, float $b): bool => $a < $b),
+            'lte' => $this->compareNumeric($left, $right, fn (float $a, float $b): bool => $a <= $b),
+            default => $this->truthy($left),
         };
 
         return ['output' => ['result' => $result ? 'true' : 'false']];
+    }
+
+    private function truthy(mixed $value): bool
+    {
+        return match (true) {
+            $value === null => false,
+            is_bool($value) => $value,
+            is_array($value) => $value !== [],
+            is_numeric($value) => (float) $value !== 0.0,
+            default => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+        };
+    }
+
+    /**
+     * Numeric comparisons require both sides to actually be numbers — comparing a
+     * non-numeric string as a float would silently read it as zero.
+     */
+    private function compareNumeric(mixed $left, mixed $right, callable $comparator): bool
+    {
+        if (! is_numeric($left) || ! is_numeric($right)) {
+            return false;
+        }
+
+        return $comparator((float) $left, (float) $right);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function listFrom(mixed $value): array
+    {
+        if (is_array($value)) {
+            return array_map(fn (mixed $item): string => (string) $item, $value);
+        }
+
+        return array_map('trim', explode(',', (string) $value));
+    }
+
+    private function matches(string $subject, string $pattern): bool
+    {
+        // A workspace-authored pattern must not be able to break the delimiter or set
+        // its own modifiers, so it is quoted into a fixed one.
+        $result = @preg_match('/'.str_replace('/', '\/', $pattern).'/', $subject);
+
+        return $result === 1;
     }
 }

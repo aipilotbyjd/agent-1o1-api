@@ -29,6 +29,8 @@ class Credential extends Model
 
     public const TYPE_BASIC_AUTH = 'basic_auth';
 
+    public const TYPE_DATABASE = 'database';
+
     /**
      * @return array<string, string>
      */

@@ -4,6 +4,7 @@ namespace App\Ai\Tools;
 
 use App\Models\Runs\Run;
 use App\Models\Tool as ToolModel;
+use App\Services\Workflows\Nodes\Connectors\CustomHttpNode;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Ai\Contracts\Tool;
@@ -41,16 +42,18 @@ class DynamicTool implements Tool
         $step?->markRunning();
 
         try {
-            $result = app(ToolHandlerRegistry::class)->for($this->tool)->execute($this->tool, $arguments);
+            $result = app(CustomHttpNode::class)->call($this->tool, $arguments);
         } catch (Throwable $exception) {
             $step?->markFailed($exception->getMessage());
 
             return 'Tool execution failed: '.$exception->getMessage();
         }
 
-        $step?->markCompleted(['result' => $result]);
+        $step?->markCompleted($result);
 
-        return $result;
+        // The model needs text, so the structured result is encoded here rather than in
+        // the node — a workflow step consumes the very same result as a real array.
+        return json_encode($result, JSON_THROW_ON_ERROR);
     }
 
     /**

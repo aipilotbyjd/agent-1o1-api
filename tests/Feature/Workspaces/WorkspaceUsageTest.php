@@ -37,7 +37,7 @@ it('aggregates token usage for a workspace', function () {
         ->assertJsonPath('data.totals.completion_tokens', 55)
         ->assertJsonPath('data.totals.total_tokens', 165)
         ->assertJsonPath('data.totals.steps', 2)
-        ->assertJsonPath('data.by_runnable.Agent:'.$agent->id, 165);
+        ->assertJsonPath('data.by_runnable.agent:'.$agent->id, 165);
 });
 
 it('filters usage by date range', function () {

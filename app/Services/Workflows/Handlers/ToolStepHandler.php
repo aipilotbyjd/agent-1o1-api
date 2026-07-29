@@ -2,20 +2,24 @@
 
 namespace App\Services\Workflows\Handlers;
 
-use App\Ai\Tools\ToolHandlerRegistry;
 use App\Models\Runs\Run;
-use App\Models\Tool;
+use App\Services\Workflows\Nodes\NodeRegistry;
 use App\Services\Workflows\TemplateResolver;
 use InvalidArgumentException;
 
 class ToolStepHandler implements StepHandler
 {
     public function __construct(
-        public ToolHandlerRegistry $registry,
+        public NodeRegistry $registry,
         public TemplateResolver $templates,
     ) {}
 
     /**
+     * Run a `tool` step through whichever connector its config names.
+     *
+     * A step either names a registry node directly (`node: "slack.post_message"`) or
+     * carries a legacy `tool_id`, which is the saved-tool form of the custom.http node.
+     *
      * @param  array<string, mixed>  $step
      * @param  array<string, mixed>  $context
      * @return array{output: array<string, mixed>}
@@ -23,19 +27,24 @@ class ToolStepHandler implements StepHandler
     public function handle(Run $run, array $step, array $context): array
     {
         $config = $step['config'] ?? [];
+        $type = $config['node'] ?? (isset($config['tool_id']) ? 'custom.http' : null);
 
-        $tool = Tool::query()
-            ->where('workspace_id', $run->workspace_id)
-            ->find($config['tool_id'] ?? null);
-
-        if ($tool === null) {
-            throw new InvalidArgumentException("Step [{$step['key']}] references a missing tool.");
+        if ($type === null) {
+            throw new InvalidArgumentException(
+                "Step [{$step['key']}] does not name a node or a tool to run.",
+            );
         }
 
-        $arguments = $this->templates->resolveArray($config['arguments'] ?? [], $context);
+        $node = $this->registry->executable((string) $type);
 
-        $result = $this->registry->for($tool)->execute($tool, $arguments);
+        // Engine-level keys are stripped so a connector only sees its own config.
+        $resolved = $this->templates->resolveArray(
+            array_diff_key($config, array_flip(['node', 'max_attempts', 'retry_delay_seconds', 'timeout_seconds', 'continue_on_error'])),
+            $context,
+        );
 
-        return ['output' => ['result' => $result]];
+        // The connector's structured result *is* the step output, so a later step can
+        // read into it directly (`steps.fetch.json.items.0.id`).
+        return ['output' => $node->execute($run, $resolved, $context)];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Workflows;
 
+use App\Enums\Runs\RunStatus;
 use App\Enums\Runs\RunStepStatus;
 use App\Enums\Workflows\WorkflowStepType;
 use App\Jobs\Workflows\ExecuteWorkflowStep;
@@ -17,6 +18,7 @@ use App\Models\Workflows\WorkflowVersion;
 use App\Models\Workspaces\WorkspaceEnvironment;
 use App\Notifications\Workspace\RunApprovalRequestedNotification;
 use App\Services\Notifications\NotificationDispatcher;
+use App\Services\Runs\SecretRedactor;
 use App\Services\Workflows\Handlers\AgentStepHandler;
 use App\Services\Workflows\Handlers\ConditionStepHandler;
 use App\Services\Workflows\Handlers\DelayStepHandler;
@@ -26,11 +28,20 @@ use App\Services\Workflows\Handlers\StepHandler;
 use App\Services\Workflows\Handlers\ToolStepHandler;
 use App\Services\Workflows\Handlers\TransformStepHandler;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use LogicException;
 use Throwable;
 
 class WorkflowRunner
 {
+    /**
+     * The edge condition that routes a failed step somewhere other than the end of the run.
+     */
+    private const ERROR_CONDITION = 'error';
+
+    private const MAX_BACKOFF_SECONDS = 3600;
+
     /**
      * Start a run against the workflow's current published version.
      *
@@ -167,6 +178,15 @@ class WorkflowRunner
             return;
         }
 
+        // A "foreach" loop fans out a child run per item and waits, so it pauses like a
+        // sub-workflow rather than returning from a handler. "map" stays a plain handler.
+        if ($stepType === WorkflowStepType::Loop && ($step['config']['mode'] ?? 'map') === 'foreach') {
+            $this->log($run, 'info', "Step [{$step['key']}] started.", $step['key']);
+            $this->startLoopFanOut($run, $runStep, $step);
+
+            return;
+        }
+
         $this->log($run, 'info', "Step [{$step['key']}] started.", $step['key']);
 
         $this->runHandlerAndAdvance($run, $runStep, $step);
@@ -182,10 +202,28 @@ class WorkflowRunner
     {
         $runStep->markRunning();
 
+        $timeout = (int) ($step['config']['timeout_seconds'] ?? 0);
+        $startedAt = microtime(true);
+
         try {
-            $result = $this->handlerFor($step)->handle($run, $step, $this->contextFor($run));
+            $result = $this->handlerFor($step)->handle($run, $step, $this->contextFor($run, $step));
         } catch (Throwable $exception) {
             $this->handleStepFailure($run, $runStep, $step, $exception->getMessage());
+
+            return;
+        }
+
+        $elapsed = microtime(true) - $startedAt;
+
+        // A step that overran its budget is failed rather than accepted late. This does
+        // not interrupt work already in flight — hard cancellation belongs to the queue
+        // worker's own timeout — but it stops an overrunning step advancing the graph.
+        if ($timeout > 0 && $elapsed > $timeout) {
+            $this->handleStepFailure($run, $runStep, $step, sprintf(
+                'Step exceeded its timeout of %ds (took %.1fs).',
+                $timeout,
+                $elapsed,
+            ));
 
             return;
         }
@@ -218,9 +256,13 @@ class WorkflowRunner
      */
     private function handleStepFailure(Run $run, RunStep $runStep, array $step, string $message): void
     {
+        // Failure messages are built from exception text and upstream response bodies,
+        // either of which can echo a credential straight back into the run record.
+        $message = app(SecretRedactor::class)->redact($run->workspace_id, $message);
+
         if ($runStep->canRetry()) {
-            $delay = $runStep->retry_delay_seconds;
-            $this->log($run, 'warning', "Step [{$step['key']}] failed, retrying: ".$message, $step['key']);
+            $delay = $this->backoffSeconds($runStep->retry_delay_seconds, $runStep->attempt);
+            $this->log($run, 'warning', "Step [{$step['key']}] failed, retrying in {$delay}s: ".$message, $step['key']);
             $runStep->scheduleRetry($message);
 
             RetryWorkflowStep::dispatch($run->id, $runStep->id)
@@ -231,7 +273,51 @@ class WorkflowRunner
 
         $this->log($run, 'error', "Step [{$step['key']}] failed: ".$message, $step['key']);
         $runStep->markFailed($message);
+
+        $hasErrorEdge = $this->edgeBetweenAny($this->graphFor($run), $step['key']);
+        $continueOnError = (bool) ($step['config']['continue_on_error'] ?? false);
+
+        // A failure with somewhere to go is a route, not the end of the run — the step
+        // stays failed, but the graph carries on down its error path.
+        if ($hasErrorEdge || $continueOnError) {
+            $this->advance($run, $step, ['result' => self::ERROR_CONDITION, 'error' => $message], failed: true);
+
+            return;
+        }
+
         $run->markFailed("Step [{$step['key']}] failed: ".$message);
+    }
+
+    /**
+     * Whether the step has any outgoing `error` edge to route a failure down.
+     *
+     * @param  array{edges?: array<int, array<string, mixed>>}  $graph
+     */
+    private function edgeBetweenAny(array $graph, string $stepKey): bool
+    {
+        foreach ($graph['edges'] ?? [] as $edge) {
+            if ($edge['from'] === $stepKey && ($edge['condition'] ?? null) === self::ERROR_CONDITION) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Exponential backoff with jitter. A fixed delay makes every worker retry a failing
+     * dependency in lockstep, so each attempt doubles the wait and is spread by up to
+     * 25% to break up the thundering herd.
+     */
+    private function backoffSeconds(int $base, int $attempt): int
+    {
+        if ($base <= 0) {
+            return 0;
+        }
+
+        $delay = min($base * (2 ** max(0, $attempt - 1)), self::MAX_BACKOFF_SECONDS);
+
+        return (int) round($delay + random_int(0, (int) max(1, $delay * 0.25)));
     }
 
     /**
@@ -271,7 +357,7 @@ class WorkflowRunner
     {
         $message = app(TemplateResolver::class)->resolve(
             $step['config']['message'] ?? 'A workflow step is waiting for approval.',
-            $this->contextFor($run),
+            $this->contextFor($run, $step),
         );
 
         $this->log($run, 'info', "Step [{$step['key']}] is awaiting approval.", $step['key']);
@@ -291,20 +377,33 @@ class WorkflowRunner
      * @param  array<string, mixed>  $step
      * @param  array<string, mixed>  $output
      */
-    private function advance(Run $run, array $step, array $output): void
+    private function advance(Run $run, array $step, array $output, bool $failed = false): void
     {
         $graph = $this->graphFor($run);
         $delaySeconds = $step['type'] === WorkflowStepType::Delay->value ? (int) ($output['seconds'] ?? 0) : 0;
 
-        $edges = array_filter(
+        $outgoing = array_filter(
             $graph['edges'] ?? [],
-            fn (array $edge): bool => $edge['from'] === $step['key']
-                && (($edge['condition'] ?? null) === null || $edge['condition'] === ($output['result'] ?? null)),
+            fn (array $edge): bool => $edge['from'] === $step['key'],
         );
+
+        $taken = array_filter(
+            $outgoing,
+            fn (array $edge): bool => $this->edgeMatches($edge, $output, $failed),
+        );
+
+        // Dead branches are settled *before* the live ones are dispatched. A dispatched
+        // step can run all the way to a downstream merge synchronously, and that merge
+        // must already be able to see which of its branches will never arrive.
+        foreach ($outgoing as $edge) {
+            if (! $this->edgeMatches($edge, $output, $failed)) {
+                $this->skipUnreachable($run, $graph, $edge['to']);
+            }
+        }
 
         $dispatched = false;
 
-        foreach ($edges as $edge) {
+        foreach ($taken as $edge) {
             if ($run->steps()->where('key', $edge['to'])->exists()) {
                 continue;
             }
@@ -321,26 +420,134 @@ class WorkflowRunner
     }
 
     /**
+     * Whether an edge is followed given the source step's outcome.
+     *
+     * An `error` edge is followed only when the step failed, and never otherwise — an
+     * unconditional edge must not fire on a failure, or a failed step would silently
+     * continue down its happy path.
+     *
+     * @param  array<string, mixed>  $edge
+     * @param  array<string, mixed>  $output
+     */
+    private function edgeMatches(array $edge, array $output, bool $failed): bool
+    {
+        $condition = $edge['condition'] ?? null;
+
+        if ($failed) {
+            return $condition === self::ERROR_CONDITION;
+        }
+
+        return $condition !== self::ERROR_CONDITION
+            && ($condition === null || $condition === ($output['result'] ?? null));
+    }
+
+    /**
+     * Mark a step (and anything only reachable through it) skipped, once no live
+     * predecessor can still dispatch it.
+     *
+     * @param  array{steps?: array<int, array<string, mixed>>, edges?: array<int, array<string, mixed>>}  $graph
+     */
+    private function skipUnreachable(Run $run, array $graph, string $stepKey): void
+    {
+        if ($run->steps()->where('key', $stepKey)->exists()) {
+            return;
+        }
+
+        $predecessorKeys = $this->predecessorKeys($graph, $stepKey);
+
+        foreach ($predecessorKeys as $predecessorKey) {
+            $predecessor = $run->steps()->where('key', $predecessorKey)->first();
+
+            // A predecessor that has not run, or is still running, may yet dispatch it.
+            if ($predecessor === null || ! $predecessor->status->isTerminal()) {
+                return;
+            }
+
+            if ($predecessor->status === RunStepStatus::Completed || $predecessor->status === RunStepStatus::Failed) {
+                $edge = $this->edgeBetween($graph, $predecessorKey, $stepKey);
+
+                if ($edge !== null && $this->edgeMatches(
+                    $edge,
+                    $predecessor->output ?? [],
+                    $predecessor->status === RunStepStatus::Failed,
+                )) {
+                    // Still reachable — but this skip may have settled the last branch a
+                    // waiting merge needed, so give it another chance to run.
+                    if ($this->allComplete($run, $predecessorKeys)) {
+                        ExecuteWorkflowStep::dispatch($run->id, $stepKey);
+                    }
+
+                    return;
+                }
+            }
+        }
+
+        try {
+            $runStep = $run->steps()->create(['key' => $stepKey, 'type' => $this->findStep($graph, $stepKey)['type'] ?? 'transform']);
+        } catch (UniqueConstraintViolationException) {
+            return;
+        }
+
+        $runStep->markSkipped();
+        $this->log($run, 'info', "Step [{$stepKey}] was skipped — no branch reaches it.", $stepKey);
+
+        foreach ($graph['edges'] ?? [] as $edge) {
+            if ($edge['from'] === $stepKey) {
+                $this->skipUnreachable($run, $graph, $edge['to']);
+            }
+        }
+    }
+
+    /**
+     * @param  array{edges?: array<int, array<string, mixed>>}  $graph
+     * @return array<string, mixed>|null
+     */
+    private function edgeBetween(array $graph, string $from, string $to): ?array
+    {
+        foreach ($graph['edges'] ?? [] as $edge) {
+            if ($edge['from'] === $from && $edge['to'] === $to) {
+                return $edge;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Complete the run when no steps remain in flight.
+     *
+     * The check and the write happen under a row lock on the run: two branches finishing
+     * at once would otherwise both observe "nothing in flight" and complete a run whose
+     * sibling step is about to be created.
      *
      * @param  array<string, mixed>  $lastOutput
      */
     private function finishIfDone(Run $run, array $lastOutput): void
     {
+        DB::transaction(function () use ($run, $lastOutput): void {
+            $locked = Run::query()->lockForUpdate()->find($run->id);
+
+            if ($locked === null || $locked->status->isTerminal()) {
+                return;
+            }
+
+            $inFlight = $locked->steps()
+                ->whereIn('status', [
+                    RunStepStatus::Pending->value,
+                    RunStepStatus::Running->value,
+                    RunStepStatus::AwaitingApproval->value,
+                ])
+                ->exists();
+
+            if ($inFlight) {
+                return;
+            }
+
+            $this->log($locked, 'info', 'Run completed.');
+            $locked->markCompleted($lastOutput);
+        });
+
         $run->refresh();
-
-        if ($run->status->isTerminal()) {
-            return;
-        }
-
-        $inFlight = $run->steps()
-            ->whereIn('status', [RunStepStatus::Pending->value, RunStepStatus::Running->value, RunStepStatus::AwaitingApproval->value])
-            ->exists();
-
-        if (! $inFlight) {
-            $this->log($run, 'info', 'Run completed.');
-            $run->markCompleted($lastOutput);
-        }
     }
 
     /**
@@ -348,16 +555,13 @@ class WorkflowRunner
      *
      * @return array<string, mixed>
      */
-    private function contextFor(Run $run): array
+    private function contextFor(Run $run, ?array $step = null): array
     {
         $steps = $run->steps()
             ->where('status', RunStepStatus::Completed->value)
             ->get()
             ->mapWithKeys(fn (RunStep $runStep): array => [$runStep->key => $runStep->output]);
 
-        // Every workspace variable (secret or not) is available to step templates as
-        // {{ variables.key }} — a step that maps one into its output is a deliberate
-        // choice by the workflow author, same as referencing any other context value.
         $variables = Variable::query()
             ->where('workspace_id', $run->workspace_id)
             ->get()
@@ -369,7 +573,34 @@ class WorkflowRunner
             $variables = $variables->merge($run->environment?->variables ?? []);
         }
 
+        // Only the variables a step actually names are handed to it. Every step used to
+        // receive every workspace secret, so one careless `{{ variables }}` mapping — or
+        // one connector that echoes its input — exposed credentials the step never used.
+        if ($step !== null) {
+            $referenced = $this->referencedVariableKeys($step['config'] ?? []);
+            $variables = $variables->only($referenced);
+        }
+
         return ['input' => $run->input ?? [], 'steps' => $steps->all(), 'variables' => $variables->all()];
+    }
+
+    /**
+     * Every `variables.x` path mentioned anywhere in a step's config.
+     *
+     * @param  array<array-key, mixed>  $config
+     * @return array<int, string>
+     */
+    private function referencedVariableKeys(array $config): array
+    {
+        $encoded = json_encode($config);
+
+        if ($encoded === false) {
+            return [];
+        }
+
+        preg_match_all('/variables\.([\w\-]+)/', $encoded, $matches);
+
+        return array_values(array_unique($matches[1] ?? []));
     }
 
     /**
@@ -434,12 +665,14 @@ class WorkflowRunner
             return true;
         }
 
-        $completed = $run->steps()
-            ->where('status', RunStepStatus::Completed->value)
+        // A skipped branch counts as settled: it will never complete, and waiting on it
+        // is exactly the deadlock this accounting exists to avoid.
+        $settled = $run->steps()
+            ->whereIn('status', [RunStepStatus::Completed->value, RunStepStatus::Skipped->value])
             ->whereIn('key', $stepKeys)
             ->pluck('key');
 
-        return count(array_intersect($stepKeys, $completed->all())) === count($stepKeys);
+        return count(array_intersect($stepKeys, $settled->all())) === count($stepKeys);
     }
 
     /**
@@ -463,7 +696,7 @@ class WorkflowRunner
 
         $runStep->markRunning();
 
-        $input = app(TemplateResolver::class)->resolveArray($config['input'] ?? [], $this->contextFor($run));
+        $input = app(TemplateResolver::class)->resolveArray($config['input'] ?? [], $this->contextFor($run, $step));
 
         $child = $this->start($workflow, $run->triggeredBy, $input, 'sub_workflow', $run->environment);
         $child->update(['parent_run_id' => $run->id, 'parent_step_id' => $runStep->id]);
@@ -479,6 +712,198 @@ class WorkflowRunner
     }
 
     /**
+     * Fan a loop step out into one child run per item.
+     *
+     * Each iteration is a real child run of the configured workflow, so items execute on
+     * the queue in parallel, fail in isolation, and are inspectable individually — rather
+     * than being flattened into one synchronous pass inside a handler.
+     *
+     * @param  array<string, mixed>  $step
+     */
+    private function startLoopFanOut(Run $run, RunStep $runStep, array $step): void
+    {
+        $config = $step['config'] ?? [];
+        $context = $this->contextFor($run, $step);
+        $items = data_get($context, (string) ($config['items'] ?? ''));
+
+        if (! is_array($items)) {
+            $this->handleStepFailure($run, $runStep, $step, "Step [{$step['key']}] items path did not resolve to a list.");
+
+            return;
+        }
+
+        $workflow = Workflow::query()
+            ->where('workspace_id', $run->workspace_id)
+            ->find($config['workflow_id'] ?? null);
+
+        if ($workflow === null) {
+            $this->handleStepFailure($run, $runStep, $step, "Step [{$step['key']}] references a missing workflow.");
+
+            return;
+        }
+
+        $items = array_values($items);
+        $runStep->markRunning();
+
+        // The resolved items are persisted on the step so later iterations can be started
+        // from a queue worker that no longer has the context that produced them.
+        $runStep->update(['input' => [...$config, '_loop_items' => $items]]);
+
+        if ($items === []) {
+            $runStep->markCompleted(['results' => [], 'count' => 0, 'failed' => 0]);
+            $this->advance($run, $step, ['results' => [], 'count' => 0, 'failed' => 0]);
+
+            return;
+        }
+
+        $concurrency = max(1, (int) ($config['max_concurrent'] ?? count($items)));
+
+        // The whole opening batch is started before joining. On a synchronous queue a
+        // child finishes inside its own dispatch, and joining there would see a partial
+        // batch and release iterations this loop is already about to start.
+        foreach (range(0, min($concurrency, count($items)) - 1) as $index) {
+            $this->startLoopItem($run, $runStep, $workflow, $items[$index], $index, $context, join: false);
+        }
+
+        $this->resolveLoopFanOut($run, $runStep);
+    }
+
+    /**
+     * Start one iteration's child run.
+     *
+     * @param  array<string, mixed>  $context
+     */
+    private function startLoopItem(Run $run, RunStep $runStep, Workflow $workflow, mixed $item, int $index, array $context, bool $join = true): void
+    {
+        $config = $runStep->input ?? [];
+
+        $input = app(TemplateResolver::class)->resolveArray(
+            $config['input'] ?? [],
+            [...$context, 'item' => $item, 'index' => $index],
+        );
+
+        $child = $this->start(
+            $workflow,
+            $run->triggeredBy,
+            $input === [] ? ['item' => $item, 'index' => $index] : $input,
+            'loop',
+            $run->environment,
+        );
+
+        $child->update([
+            'parent_run_id' => $run->id,
+            'parent_step_id' => $runStep->id,
+            'loop_index' => $index,
+        ]);
+
+        // On the sync queue the child has already finished by now, and the in-memory
+        // instance is stale — reload before deciding whether the join can proceed.
+        $child->refresh();
+
+        if ($join && $child->status->isTerminal()) {
+            $this->resolveLoopFanOut($run, $runStep);
+        }
+    }
+
+    /**
+     * Join a loop step: start any queued iterations, then finish once all have settled.
+     */
+    private function resolveLoopFanOut(Run $run, RunStep $runStep): void
+    {
+        $runStep->refresh();
+
+        if ($runStep->status->isTerminal()) {
+            return;
+        }
+
+        $config = $runStep->input ?? [];
+        $items = $config['_loop_items'] ?? [];
+        $policy = $config['on_item_error'] ?? 'fail_fast';
+
+        $children = Run::query()->where('parent_step_id', $runStep->id)->orderBy('loop_index')->get();
+        $failed = $children->filter(fn (Run $child): bool => $child->status === RunStatus::Failed);
+
+        if ($failed->isNotEmpty() && $policy === 'fail_fast') {
+            $this->finishLoop($run, $runStep, $children, $items, $policy);
+
+            return;
+        }
+
+        if ($children->contains(fn (Run $child): bool => ! $child->status->isTerminal())) {
+            return;
+        }
+
+        // Every started iteration has settled; release the next queued one if any remain.
+        if ($children->count() < count($items)) {
+            $workflow = Workflow::query()->find($config['workflow_id'] ?? null);
+            $index = $children->count();
+
+            if ($workflow !== null) {
+                $this->startLoopItem($run, $runStep, $workflow, $items[$index], $index, $this->contextFor($run));
+
+                return;
+            }
+        }
+
+        $this->finishLoop($run, $runStep, $children, $items, $policy);
+    }
+
+    /**
+     * @param  Collection<int, Run>  $children
+     * @param  array<int, mixed>  $items
+     */
+    private function finishLoop(Run $run, RunStep $runStep, $children, array $items, string $policy): void
+    {
+        $results = $children->map(fn (Run $child): array => [
+            'index' => $child->loop_index,
+            'run_id' => $child->id,
+            'status' => $child->status->value,
+            'output' => $child->output,
+            'error' => $child->error,
+        ])->values()->all();
+
+        $failed = $children->filter(fn (Run $child): bool => $child->status !== RunStatus::Completed);
+
+        $output = [
+            'results' => $results,
+            'count' => count($results),
+            'failed' => $failed->count(),
+            'errors' => $failed->map(fn (Run $child): array => [
+                'index' => $child->loop_index,
+                'error' => $child->error,
+            ])->values()->all(),
+        ];
+
+        $step = $this->findStep($this->graphFor($run), $runStep->key) ?? ['key' => $runStep->key, 'config' => []];
+
+        // fail_fast stops the run on the first bad item; collect_errors and continue both
+        // carry on, differing only in whether the failures stay visible in the output.
+        if ($failed->isNotEmpty() && $policy === 'fail_fast') {
+            $this->handleStepFailure(
+                $run,
+                $runStep,
+                $step,
+                "Loop step [{$runStep->key}] had {$failed->count()} failed iteration(s).",
+            );
+
+            return;
+        }
+
+        if ($policy === 'continue') {
+            $output['results'] = array_values(array_filter(
+                $results,
+                fn (array $result): bool => $result['status'] === RunStatus::Completed->value,
+            ));
+        }
+
+        $run->markRunning();
+        $runStep->markCompleted($output);
+        $this->log($run, 'info', "Step [{$runStep->key}] completed ".count($items).' iteration(s).', $runStep->key);
+
+        $this->advance($run, $step, $output);
+    }
+
+    /**
      * Resume the parent run's step once its child sub-workflow run finishes.
      */
     public function resolveSubWorkflow(Run $child): void
@@ -491,6 +916,14 @@ class WorkflowRunner
         $parentStep = $child->parentStep;
 
         if ($parentRun === null || $parentStep === null || $parentStep->status->isTerminal()) {
+            return;
+        }
+
+        // A loop step owns many children, so it joins on all of them rather than
+        // resuming on the first one to finish.
+        if ($parentStep->type === WorkflowStepType::Loop->value) {
+            $this->resolveLoopFanOut($parentRun, $parentStep);
+
             return;
         }
 
@@ -542,13 +975,15 @@ class WorkflowRunner
      */
     private function log(Run $run, string $level, string $message, ?string $stepKey = null, array $context = []): void
     {
+        $redactor = app(SecretRedactor::class);
+
         RunLog::create([
             'run_id' => $run->id,
             'workspace_id' => $run->workspace_id,
             'step_key' => $stepKey,
             'level' => $level,
-            'message' => $message,
-            'context' => $context === [] ? null : $context,
+            'message' => $redactor->redact($run->workspace_id, $message),
+            'context' => $context === [] ? null : $redactor->redact($run->workspace_id, $context),
             'logged_at' => now(),
         ]);
     }

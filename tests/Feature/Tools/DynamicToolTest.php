@@ -14,13 +14,16 @@ it('executes an http tool and logs a run step', function () {
 
     $result = (string) (new DynamicTool($tool, $run))->handle(new ToolRequest(['query' => 'ORD-1']));
 
-    expect($result)->toContain('HTTP 200');
+    // The model receives the structured result encoded as JSON text.
+    expect(json_decode($result, true))
+        ->toMatchArray(['ok' => true, 'status' => 200, 'json' => ['ok' => true]]);
 
     $step = $run->steps()->first();
     expect($step->key)->toBe('tool:order_lookup')
         ->and($step->type)->toBe('tool')
         ->and($step->status)->toBe(RunStepStatus::Completed)
-        ->and($step->input)->toBe(['query' => 'ORD-1']);
+        ->and($step->input)->toBe(['query' => 'ORD-1'])
+        ->and($step->output['status'])->toBe(200);
 });
 
 it('logs a failed run step when the handler throws', function () {

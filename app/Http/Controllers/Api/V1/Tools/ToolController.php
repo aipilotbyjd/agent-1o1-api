@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1\Tools;
 
-use App\Ai\Tools\ToolHandlerRegistry;
 use App\Enums\Workspaces\Permission;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Tools\StoreToolRequest;
@@ -11,6 +10,7 @@ use App\Http\Resources\V1\Tools\ToolResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Tool;
 use App\Models\Workspaces\Workspace;
+use App\Services\Workflows\Nodes\Connectors\CustomHttpNode;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -68,14 +68,14 @@ class ToolController extends Controller
         return ApiResponse::success(null, 'Tool deleted.');
     }
 
-    public function test(Request $request, Workspace $workspace, Tool $tool, ToolHandlerRegistry $registry): JsonResponse
+    public function test(Request $request, Workspace $workspace, Tool $tool, CustomHttpNode $node): JsonResponse
     {
         $this->ensureBelongsToWorkspace($workspace, $tool);
 
         $this->requirePermission(Permission::ToolManage);
 
         try {
-            $result = $registry->for($tool)->execute($tool, $request->input('arguments', []));
+            $result = $node->call($tool, $request->input('arguments', []));
         } catch (Throwable $exception) {
             return ApiResponse::error('Tool execution failed: '.$exception->getMessage());
         }

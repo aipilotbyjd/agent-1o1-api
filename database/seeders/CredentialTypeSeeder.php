@@ -49,6 +49,16 @@ class CredentialTypeSeeder extends Seeder
                     ['name' => 'username', 'label' => 'Username', 'type' => 'string', 'secret' => false, 'required' => true],
                     ['name' => 'password', 'label' => 'Password', 'type' => 'string', 'secret' => true, 'required' => true],
                 ]],
+            ['key' => 'database', 'name' => 'Database', 'auth_type' => 'database',
+                'description' => 'Connection details for an external SQL database.',
+                'color' => '#10b981', 'icon' => 'database', 'docs_url' => null,
+                'fields' => [
+                    ['name' => 'host', 'label' => 'Host', 'type' => 'string', 'secret' => false, 'required' => true],
+                    ['name' => 'port', 'label' => 'Port', 'type' => 'string', 'secret' => false, 'required' => true],
+                    ['name' => 'database', 'label' => 'Database', 'type' => 'string', 'secret' => false, 'required' => true],
+                    ['name' => 'username', 'label' => 'Username', 'type' => 'string', 'secret' => false, 'required' => true],
+                    ['name' => 'password', 'label' => 'Password', 'type' => 'string', 'secret' => true, 'required' => true],
+                ]],
         ];
     }
 }

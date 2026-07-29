@@ -89,6 +89,8 @@ it('creates a workspace environment and rejects a duplicate slug', function () {
 it('requests and approves a workflow approval', function () {
     [$user, $workspace] = newDomainWorkspace();
     $workflow = Workflow::factory()->create(['workspace_id' => $workspace->id]);
+    // Approving publishes the graph, which must be valid to publish.
+    $workflow->replaceGraph([['key' => 's1', 'type' => 'delay', 'config' => [], 'position' => null]], []);
 
     $response = $this->withToken(authHeader($user))
         ->postJson("/api/v1/workspaces/{$workspace->id}/workflows/{$workflow->id}/approvals", []);
@@ -104,7 +106,7 @@ it('requests and approves a workflow approval', function () {
 it('exposes a shared workflow publicly without workspace info', function () {
     [, $workspace] = newDomainWorkspace();
     $workflow = Workflow::factory()->create(['workspace_id' => $workspace->id]);
-    $workflow->replaceGraph([], []);
+    $workflow->replaceGraph([['key' => 's1', 'type' => 'delay', 'config' => [], 'position' => null]], []);
     $workflow->publishVersion();
 
     $share = WorkflowShare::factory()->create(['workflow_id' => $workflow->id, 'workspace_id' => $workspace->id]);

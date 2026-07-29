@@ -3,6 +3,7 @@
 use App\Ai\Agents\WorkspaceAgent;
 use App\Enums\Runs\RunStatus;
 use App\Enums\Runs\RunStepStatus;
+use App\Exceptions\Workflows\InvalidGraphException;
 use App\Models\Agents\Agent;
 use App\Models\Runs\Run;
 use App\Models\Tool;
@@ -86,9 +87,13 @@ it('follows only the matching condition branch', function () {
     )->assertCreated();
 
     $run = Run::query()->latest('id')->first();
+
+    // The excluded branch is recorded as skipped rather than left absent, so a merge
+    // downstream can tell "will never arrive" apart from "has not arrived yet".
     expect($run->status)->toBe(RunStatus::Completed)
         ->and($run->output)->toBe(['path' => 'big'])
-        ->and($run->steps()->pluck('key')->all())->not->toContain('small');
+        ->and($run->steps()->where('key', 'big')->first()->status)->toBe(RunStepStatus::Completed)
+        ->and($run->steps()->where('key', 'small')->first()->status)->toBe(RunStepStatus::Skipped);
 });
 
 it('executes a tool step with templated arguments', function () {
@@ -136,10 +141,25 @@ it('marks the run failed when a step throws', function () {
         ->and($run->steps()->where('key', 'after')->exists())->toBeFalse();
 });
 
-it('fails a run for a workflow with no steps', function () {
+it('refuses to publish a workflow with no steps', function () {
     [$user, $workspace] = executionWorkspace();
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
-    $workflow->publishVersion();
+
+    expect(fn () => $workflow->publishVersion())
+        ->toThrow(InvalidGraphException::class, 'The graph has no steps.');
+});
+
+it('fails a run whose pinned version has no steps', function () {
+    [$user, $workspace] = executionWorkspace();
+    $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
+
+    // Versions published before graph validation existed can still be empty, so the
+    // engine keeps its own guard rather than trusting every stored version.
+    $version = $workflow->versions()->create([
+        'version' => 1,
+        'graph' => ['steps' => [], 'edges' => []],
+    ]);
+    $workflow->update(['current_version_id' => $version->id]);
 
     $this->withToken(authHeader($user))->postJson(
         "/api/v1/workspaces/{$workspace->id}/workflows/{$workflow->id}/trigger",

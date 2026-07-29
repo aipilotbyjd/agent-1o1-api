@@ -4,6 +4,8 @@ namespace App\Models\Workflows;
 
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
+use App\Services\Workflows\Nodes\ConfigSchemaValidator;
+use App\Services\Workflows\Nodes\StepNodeResolver;
 use Database\Factories\Workflows\WorkflowBuilderSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -94,7 +96,11 @@ class WorkflowBuilderSession extends Model
             throw new InvalidArgumentException("Step [{$key}] already exists.");
         }
 
-        $graph['steps'][] = ['key' => $key, 'type' => $type, 'config' => $config, 'position' => $position];
+        $step = ['key' => $key, 'type' => $type, 'config' => $config, 'position' => $position];
+
+        $this->assertStepIsValid($step);
+
+        $graph['steps'][] = $step;
 
         $this->applyGraph($graph, $by);
     }
@@ -110,6 +116,7 @@ class WorkflowBuilderSession extends Model
         foreach ($graph['steps'] as &$step) {
             if ($step['key'] === $key) {
                 $step['config'] = [...($step['config'] ?? []), ...$config];
+                $this->assertStepIsValid($step);
                 $found = true;
                 break;
             }
@@ -121,6 +128,36 @@ class WorkflowBuilderSession extends Model
         }
 
         $this->applyGraph($graph, $by);
+    }
+
+    /**
+     * Reject a step whose config does not match its node's schema.
+     *
+     * Validating here rather than in the agent's tools means the agent gets the specific
+     * missing or mistyped field back as a tool result and can correct itself, instead of
+     * the mistake surfacing much later as a failed publish.
+     *
+     * @param  array<string, mixed>  $step
+     */
+    private function assertStepIsValid(array $step): void
+    {
+        $definition = app(StepNodeResolver::class)->definitionFor($step);
+
+        if ($definition === null) {
+            throw new InvalidArgumentException(
+                "There is no node for step type [{$step['type']}]. Use list_available_nodes to see valid types.",
+            );
+        }
+
+        $issues = app(ConfigSchemaValidator::class)->issues(
+            $definition->configSchema(),
+            $step['config'] ?? [],
+            (string) $step['key'],
+        );
+
+        if ($issues !== []) {
+            throw new InvalidArgumentException(implode(' ', $issues));
+        }
     }
 
     public function removeStep(string $key, ?User $by = null): void

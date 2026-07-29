@@ -35,7 +35,7 @@ it('puts a file per published workflow and records last_synced_at', function () 
 it('includes the existing sha when updating a file that already exists', function () {
     $config = GitSyncConfig::factory()->create(['repository' => 'acme/workflows', 'base_path' => 'workflows']);
     $workflow = Workflow::factory()->create(['workspace_id' => $config->workspace_id]);
-    $workflow->replaceGraph([], []);
+    $workflow->replaceGraph([['key' => 's1', 'type' => 'delay', 'config' => [], 'position' => null]], []);
     $workflow->publishVersion();
     $workflow->update(['status' => 'published']);
 
@@ -74,12 +74,12 @@ it('skips an inactive config entirely', function () {
 it('keeps syncing remaining workflows when one request fails', function () {
     $config = GitSyncConfig::factory()->create(['repository' => 'acme/workflows', 'base_path' => 'workflows']);
     $failing = Workflow::factory()->create(['workspace_id' => $config->workspace_id]);
-    $failing->replaceGraph([], []);
+    $failing->replaceGraph([['key' => 's1', 'type' => 'delay', 'config' => [], 'position' => null]], []);
     $failing->publishVersion();
     $failing->update(['status' => 'published']);
 
     $succeeding = Workflow::factory()->create(['workspace_id' => $config->workspace_id]);
-    $succeeding->replaceGraph([], []);
+    $succeeding->replaceGraph([['key' => 's1', 'type' => 'delay', 'config' => [], 'position' => null]], []);
     $succeeding->publishVersion();
     $succeeding->update(['status' => 'published']);
 

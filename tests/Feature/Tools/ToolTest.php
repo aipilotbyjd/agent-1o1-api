@@ -82,7 +82,8 @@ it('executes a tool via the test endpoint', function () {
     );
 
     $response->assertOk();
-    expect($response->json('data.result'))->toContain('shipped');
+    expect($response->json('data.result.status'))->toBe(200)
+        ->and($response->json('data.result.json.status'))->toBe('shipped');
 });
 
 it('syncs tools onto an agent within the same workspace only', function () {

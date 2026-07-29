@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 #[Fillable([
     'workspace_id', 'runnable_type', 'runnable_id', 'workflow_version_id', 'environment_id', 'agent_version',
     'status', 'trigger_type', 'input', 'output', 'error', 'triggered_by', 'started_at', 'finished_at',
-    'parent_run_id', 'parent_step_id',
+    'parent_run_id', 'parent_step_id', 'loop_index',
 ])]
 class Run extends Model
 {
