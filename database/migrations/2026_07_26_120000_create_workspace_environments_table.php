@@ -22,6 +22,11 @@ return new class extends Migration
 
             $table->unique(['workspace_id', 'slug']);
         });
+
+        Schema::table('runs', function (Blueprint $table) {
+            $table->foreign('environment_id')
+                ->references('id')->on('workspace_environments')->nullOnDelete();
+        });
     }
 
     /**
@@ -29,6 +34,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('runs', function (Blueprint $table) {
+            $table->dropForeign(['environment_id']);
+        });
+
         Schema::dropIfExists('workspace_environments');
     }
 };

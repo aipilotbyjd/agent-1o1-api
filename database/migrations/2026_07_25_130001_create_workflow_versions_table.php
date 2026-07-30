@@ -22,6 +22,11 @@ return new class extends Migration
 
             $table->unique(['workflow_id', 'version']);
         });
+
+        Schema::table('workflows', function (Blueprint $table) {
+            $table->foreign('current_version_id')
+                ->references('id')->on('workflow_versions')->nullOnDelete();
+        });
     }
 
     /**
@@ -29,6 +34,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('workflows', function (Blueprint $table) {
+            $table->dropForeign(['current_version_id']);
+        });
+
         Schema::dropIfExists('workflow_versions');
     }
 };

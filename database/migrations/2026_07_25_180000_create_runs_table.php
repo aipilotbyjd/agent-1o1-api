@@ -16,6 +16,9 @@ return new class extends Migration
             $table->foreignId('workspace_id')->constrained()->cascadeOnDelete();
             $table->nullableMorphs('runnable');
             $table->foreignId('workflow_version_id')->nullable()->constrained('workflow_versions')->nullOnDelete();
+            $table->foreignId('parent_run_id')->nullable()->constrained('runs')->nullOnDelete();
+            $table->foreignId('parent_step_id')->nullable();
+            $table->foreignId('environment_id')->nullable();
             $table->unsignedInteger('agent_version')->nullable();
             $table->string('status')->default('pending');
             $table->string('trigger_type')->default('manual');

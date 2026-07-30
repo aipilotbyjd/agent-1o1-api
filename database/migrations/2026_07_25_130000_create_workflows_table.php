@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('slug');
             $table->text('description')->nullable();
             $table->string('status')->default('draft');
+            $table->foreignId('current_version_id')->nullable();
+            $table->boolean('has_unpublished_changes')->default(false);
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();

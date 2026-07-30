@@ -19,7 +19,11 @@ return new class extends Migration
             $table->foreignId('trigger_type_id')->nullable()->constrained('trigger_types')->nullOnDelete();
             $table->json('config')->nullable();
             $table->string('token', 64)->nullable()->unique();
+            $table->text('signing_secret')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->foreignId('credential_id')->nullable()->constrained()->nullOnDelete();
+            $table->json('poll_cursor')->nullable();
+            $table->unsignedInteger('consecutive_failure_count')->default(0);
             $table->timestamp('last_run_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
