@@ -234,9 +234,10 @@ class Workflow extends Model
             $this->edges()->delete();
             $this->steps()->delete();
 
+            // Builtins are shared; a custom node belongs to this workspace. Both are
+            // linked so a step always points at the row that drives it.
             $nodeIdsByType = Node::query()
-                ->whereNull('workspace_id')
-                ->where('is_custom', false)
+                ->where(fn ($query) => $query->whereNull('workspace_id')->orWhere('workspace_id', $this->workspace_id))
                 ->pluck('id', 'type');
 
             $stepsByKey = [];

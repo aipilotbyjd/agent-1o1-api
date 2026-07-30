@@ -1,8 +1,8 @@
 <?php
 
 use App\Models\Credentials\Credential;
+use App\Models\Nodes\Node;
 use App\Models\Runs\RunLog;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Variable;
 use App\Models\Workflows\Workflow;
@@ -79,11 +79,12 @@ it('does not leak a credential value into a failed step run log', function () {
         'data' => ['token' => 'tok-live-9876543210'],
     ]);
 
-    $tool = Tool::factory()->create([
-        'workspace_id' => $workspace->id,
-        'credential_id' => $credential->id,
-        'config' => ['url' => 'https://api.example.com/thing', 'method' => 'GET', 'parameters' => []],
-    ]);
+    Node::factory()->custom()
+        ->callingUrl('https://api.example.com/thing')
+        ->create([
+            'workspace_id' => $workspace->id,
+            'credential_id' => $credential->id,
+        ]);
 
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
     $workflow->steps()->create([

@@ -34,7 +34,7 @@ enum Permission: string
     case AgentManage = 'agent.manage';
     case AgentChat = 'agent.chat';
     case AgentTemplateUse = 'agent.template.use';
-    case AgentToolsSync = 'agent.tools.sync';
+    case AgentNodesSync = 'agent.nodes.sync';
     case AgentSkillsSync = 'agent.skills.sync';
     case AgentKnowledgeView = 'agent.knowledge.view';
     case AgentKnowledgeManage = 'agent.knowledge.manage';
@@ -53,9 +53,7 @@ enum Permission: string
     case AgentEvalRun = 'agent.eval.run';
     case AgentAnalyticsView = 'agent.analytics.view';
 
-    // Tools / Nodes / Credentials / Variables
-    case ToolView = 'tool.view';
-    case ToolManage = 'tool.manage';
+    // Nodes / Credentials / Variables
     case NodeView = 'node.view';
     case NodeManage = 'node.manage';
     case CredentialView = 'credential.view';
@@ -124,7 +122,6 @@ enum Permission: string
             self::AgentVersionView,
             self::AgentEvalView,
             self::AgentAnalyticsView,
-            self::ToolView,
             self::NodeView,
             self::CredentialView,
             self::VariableView,
@@ -178,7 +175,6 @@ enum Permission: string
             self::AgentSkillScriptManage,
             self::AgentVersionManage,
             self::AgentEvalManage,
-            self::ToolManage,
             self::NodeManage,
             self::VariableManage,
             self::WorkflowManage,
@@ -213,7 +209,7 @@ enum Permission: string
             self::GitSyncManage,
             self::DocumentEmbeddingManage,
             self::CredentialManage,
-            self::AgentToolsSync,
+            self::AgentNodesSync,
             self::AgentSkillsSync,
             self::WorkflowApprovalReview,
             self::WorkflowEnvironmentReleaseManage,

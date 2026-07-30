@@ -26,9 +26,18 @@ class NodeResource extends JsonResource
             'icon' => $this->icon,
             'color' => $this->color,
             'config_schema' => $this->config_schema,
+            // Only a custom node stores its own call definition; builtins define theirs
+            // in code.
+            'config' => $this->when($this->is_custom, $this->config),
             'input_schema' => $this->input_schema,
             'output_schema' => $this->output_schema,
             'credential_type' => $this->credential_type,
+            'credential_id' => $this->credential_id,
+            // Present only when the node was loaded through an agent's attachments.
+            'attachment' => $this->whenPivotLoaded('agent_node', fn (): array => [
+                'config' => $this->pivot->config,
+                'exposed_fields' => $this->pivot->exposed_fields,
+            ]),
             'cost_hint_usd' => $this->cost_hint_usd,
             'latency_hint_ms' => $this->latency_hint_ms,
             'is_active' => $this->is_active,

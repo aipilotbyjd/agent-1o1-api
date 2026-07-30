@@ -48,6 +48,7 @@ it('allows an admin to create a custom node', function () {
         'icon' => 'bolt',
         'color' => '#000000',
         'config_schema' => ['type' => 'object', 'properties' => []],
+        'config' => ['url' => 'https://api.example.com/thing', 'method' => 'POST'],
     ]);
 
     $response->assertCreated()

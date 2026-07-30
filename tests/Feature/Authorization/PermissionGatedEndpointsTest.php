@@ -2,7 +2,8 @@
 
 use App\Models\Agents\Agent;
 use App\Models\Credentials\CredentialType;
-use App\Models\Tool;
+use App\Models\Nodes\Node;
+use App\Models\Nodes\NodeCategory;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
@@ -34,10 +35,14 @@ it('gates content authoring behind at least the editor role', function (string $
     $workspace = Workspace::factory()->create();
     $user = memberWithRole($workspace, $role);
 
-    $response = $this->withToken(authHeader($user))->postJson("/api/v1/workspaces/{$workspace->id}/tools", [
-        'name' => 'My Tool',
-        'description' => 'A test tool.',
-        'type' => 'http',
+    $response = $this->withToken(authHeader($user))->postJson("/api/v1/workspaces/{$workspace->id}/nodes", [
+        'category_id' => NodeCategory::factory()->create()->id,
+        'step_type' => 'tool',
+        'name' => 'My Node',
+        'description' => 'A test node.',
+        'icon' => 'bolt',
+        'color' => '#000000',
+        'config_schema' => ['type' => 'object', 'properties' => []],
         'config' => ['url' => 'https://example.com'],
     ]);
 
@@ -49,12 +54,12 @@ it('gates content authoring behind at least the editor role', function (string $
     'admin can create' => ['admin', true],
 ]);
 
-it('gates tool deletion (editor-tier content management) behind at least the editor role', function (string $role, bool $allowed) {
+it('gates custom node deletion (editor-tier content management) behind at least the editor role', function (string $role, bool $allowed) {
     $workspace = Workspace::factory()->create();
-    $tool = Tool::factory()->create(['workspace_id' => $workspace->id]);
+    $node = Node::factory()->custom()->create(['workspace_id' => $workspace->id]);
     $user = memberWithRole($workspace, $role);
 
-    $response = $this->withToken(authHeader($user))->deleteJson("/api/v1/workspaces/{$workspace->id}/tools/{$tool->id}");
+    $response = $this->withToken(authHeader($user))->deleteJson("/api/v1/workspaces/{$workspace->id}/nodes/{$node->id}");
 
     $allowed ? $response->assertOk() : $response->assertForbidden();
 })->with([

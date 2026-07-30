@@ -5,8 +5,8 @@ use App\Enums\Runs\RunStatus;
 use App\Enums\Runs\RunStepStatus;
 use App\Exceptions\Workflows\InvalidGraphException;
 use App\Models\Agents\Agent;
+use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Workflows\Workflow;
 use App\Models\Workspaces\Workspace;
@@ -99,11 +99,11 @@ it('follows only the matching condition branch', function () {
 it('executes a tool step with templated arguments', function () {
     Http::fake(['api.example.com/*' => Http::response('found it', 200)]);
     [$user, $workspace] = executionWorkspace();
-    $tool = Tool::factory()->create(['workspace_id' => $workspace->id]);
+    $node = Node::factory()->custom()->create(['workspace_id' => $workspace->id]);
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
 
     buildGraph($workflow, [
-        ['key' => 'lookup', 'type' => 'tool', 'config' => ['tool_id' => $tool->id, 'arguments' => ['query' => '{{ input.order }}']]],
+        ['key' => 'lookup', 'type' => 'tool', 'config' => ['node' => $node->type, 'query' => '{{ input.order }}']],
     ], []);
 
     $this->withToken(authHeader($user))->postJson(
@@ -120,11 +120,11 @@ it('executes a tool step with templated arguments', function () {
 it('marks the run failed when a step throws', function () {
     Http::fake(fn () => throw new Exception('Connection refused'));
     [$user, $workspace] = executionWorkspace();
-    $tool = Tool::factory()->create(['workspace_id' => $workspace->id]);
+    $node = Node::factory()->custom()->create(['workspace_id' => $workspace->id]);
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
 
     buildGraph($workflow, [
-        ['key' => 'lookup', 'type' => 'tool', 'config' => ['tool_id' => $tool->id, 'arguments' => []]],
+        ['key' => 'lookup', 'type' => 'tool', 'config' => ['node' => $node->type]],
         ['key' => 'after', 'type' => 'transform', 'config' => ['mapping' => ['x' => 'y']]],
     ], [
         ['lookup', 'after', null],

@@ -4,14 +4,14 @@ namespace App\Services\Workflows\Nodes;
 
 class StepNodeResolver
 {
-    public function __construct(private readonly NodeRegistry $registry) {}
+    public function __construct(private readonly NodeResolver $nodes) {}
 
     /**
-     * Work out which registry node a graph step is really driven by.
+     * Work out which node a graph step is really driven by.
      *
      * Most steps map straight from their step type. A `tool` step is the exception: it
-     * names its connector in config (`node`), or carries a legacy `tool_id`, which is
-     * the saved-tool form of custom.http.
+     * names its connector in config (`node`), which may be a builtin definition or a
+     * node this workspace authored.
      *
      * @param  array<string, mixed>  $step
      */
@@ -19,17 +19,13 @@ class StepNodeResolver
     {
         $config = $step['config'] ?? [];
 
-        if (isset($config['node']) && $this->registry->has((string) $config['node'])) {
+        if (isset($config['node']) && $this->nodes->has((string) $config['node'])) {
             return (string) $config['node'];
-        }
-
-        if (($step['type'] ?? null) === 'tool' && isset($config['tool_id'])) {
-            return 'custom.http';
         }
 
         $core = 'core.'.($step['type'] ?? '');
 
-        return $this->registry->has($core) ? $core : null;
+        return $this->nodes->has($core) ? $core : null;
     }
 
     /**
@@ -39,6 +35,6 @@ class StepNodeResolver
     {
         $type = $this->typeFor($step);
 
-        return $type === null ? null : $this->registry->get($type);
+        return $type === null ? null : $this->nodes->definition($type);
     }
 }

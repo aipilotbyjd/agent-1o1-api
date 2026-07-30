@@ -10,8 +10,8 @@ use App\Http\Controllers\Api\V1\Agents\AgentMemoryController;
 use App\Http\Controllers\Api\V1\Agents\AgentTemplateController;
 use App\Http\Controllers\Api\V1\Agents\AgentVersionController;
 use App\Http\Controllers\Api\V1\Agents\ChatAgentController;
+use App\Http\Controllers\Api\V1\Agents\SyncAgentNodesController;
 use App\Http\Controllers\Api\V1\Agents\SyncAgentSkillsController;
-use App\Http\Controllers\Api\V1\Agents\SyncAgentToolsController;
 use App\Http\Controllers\Api\V1\Triggers\AgentTriggerController;
 use App\Http\Controllers\Api\V1\Triggers\TriggerEventController;
 use Illuminate\Support\Facades\Route;
@@ -25,7 +25,7 @@ Route::prefix('{workspace}/agents')->as('agents.')->group(function (): void {
     Route::put('{agent}', [AgentController::class, 'update'])->name('update');
     Route::delete('{agent}', [AgentController::class, 'destroy'])->name('destroy');
     Route::post('{agent}/chat', ChatAgentController::class)->name('chat');
-    Route::put('{agent}/tools', SyncAgentToolsController::class)->name('tools.sync');
+    Route::put('{agent}/nodes', SyncAgentNodesController::class)->name('nodes.sync');
     Route::put('{agent}/skills', SyncAgentSkillsController::class)->name('skills.sync');
     Route::get('{agent}/analytics', AgentAnalyticsController::class)->name('analytics');
 

@@ -2,7 +2,7 @@
 
 namespace App\Models\Credentials;
 
-use App\Models\Tool;
+use App\Models\Nodes\Node;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
 use Database\Factories\Credentials\CredentialFactory;
@@ -60,11 +60,11 @@ class Credential extends Model
     }
 
     /**
-     * @return HasMany<Tool, $this>
+     * @return HasMany<Node, $this>
      */
-    public function tools(): HasMany
+    public function nodes(): HasMany
     {
-        return $this->hasMany(Tool::class);
+        return $this->hasMany(Node::class);
     }
 
     public function isExpired(): bool

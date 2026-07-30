@@ -35,9 +35,22 @@ class StoreNodeRequest extends FormRequest
             'config_schema.properties' => ['present', 'array'],
             'config_schema.required' => ['sometimes', 'array'],
             'config_schema.required.*' => ['string'],
+            // The stored call this node makes. Its `config_schema` fields become the
+            // call's arguments, whether it is run from a workflow step or by an agent.
+            'config' => ['required', 'array'],
+            'config.url' => ['required', 'url', 'max:2000'],
+            'config.method' => ['sometimes', 'string', Rule::in(['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])],
+            'config.headers' => ['sometimes', 'array'],
+            'config.timeout' => ['sometimes', 'integer', 'min:1', 'max:120'],
             'input_schema' => ['sometimes', 'array'],
             'output_schema' => ['sometimes', 'array'],
             'credential_type' => ['sometimes', 'string', 'max:100', Rule::exists('credential_types', 'key')],
+            'credential_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                Rule::exists('credentials', 'id')->where('workspace_id', $this->route('workspace')->id),
+            ],
             'cost_hint_usd' => ['sometimes', 'numeric', 'min:0'],
             'latency_hint_ms' => ['sometimes', 'integer', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],

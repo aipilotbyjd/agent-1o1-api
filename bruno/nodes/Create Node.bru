@@ -39,14 +39,26 @@ body:json {
     "cost_hint_usd": 0,
     "latency_hint_ms": 500,
     "is_active": true,
+    "config": {
+      "url": "https://hooks.example.com/slack",
+      "method": "POST"
+    },
     "docs_url": "https://example.com/docs/nodes/slack-message"
   }
 }
 
 docs {
-  Creates a custom node for this workspace. `step_type` must be one of the
-  `WorkflowStepType` enum values (`agent`, `tool`, `condition`, `transform`, `delay`,
-  `human_approval`, `merge`, `sub_workflow`, `loop`). The node's `type` key is
+  Creates a custom node for this workspace — a connector you define yourself, callable
+  from a workflow step or attachable to an agent as a tool.
+
+  `config` is the call the node makes (`url` is required); `config_schema` describes the
+  fields that become that call's arguments — querystring for a GET, JSON body otherwise.
+  Set `credential_id` to authenticate the call without ever exposing the secret to a
+  model.
+
+  `step_type` must be one of the `WorkflowStepType` enum values (`agent`, `tool`,
+  `condition`, `transform`, `delay`, `human_approval`, `merge`, `sub_workflow`,
+  `loop`). The node's `type` key is
   auto-generated from the name. Requires the `node.manage` permission.
 
   Expected result:

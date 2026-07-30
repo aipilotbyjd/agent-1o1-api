@@ -2,15 +2,15 @@
 
 namespace App\Ai\Agents;
 
-use App\Ai\Tools\DynamicTool;
+use App\Ai\Tools\NodeTool;
 use App\Ai\Tools\SearchKnowledgeTool;
 use App\Models\Agents\Agent as AgentModel;
 use App\Models\Agents\AgentKnowledge;
 use App\Models\Agents\AgentMemory;
 use App\Models\Agents\AgentSkill;
 use App\Models\Agents\DocumentEmbedding;
+use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
-use App\Models\Tool;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -118,14 +118,14 @@ class WorkspaceAgent implements Agent, Conversational, HasTools
     }
 
     /**
-     * @return iterable<int, DynamicTool|SearchKnowledgeTool>
+     * @return iterable<int, NodeTool|SearchKnowledgeTool>
      */
     public function tools(): iterable
     {
-        $tools = $this->agentModel->tools()
+        $tools = $this->agentModel->nodes()
             ->where('is_active', true)
             ->get()
-            ->map(fn (Tool $tool): DynamicTool => new DynamicTool($tool, $this->run))
+            ->map(fn (Node $node): NodeTool => new NodeTool($node, $this->agentModel, $this->run))
             ->all();
 
         // Only offer the tool when there's actually something to search — an empty

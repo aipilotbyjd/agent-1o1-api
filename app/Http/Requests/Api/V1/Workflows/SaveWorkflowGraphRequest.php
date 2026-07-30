@@ -31,10 +31,10 @@ class SaveWorkflowGraphRequest extends FormRequest
                 'required_if:steps.*.type,agent',
                 Rule::exists('agents', 'id')->where('workspace_id', $workspace->id),
             ],
-            'steps.*.config.tool_id' => [
-                'required_if:steps.*.type,tool',
-                Rule::exists('tools', 'id')->where('workspace_id', $workspace->id),
-            ],
+            // A tool step names the node that runs it. Whether that node exists is
+            // settled by graph validation, which resolves builtins and this
+            // workspace's custom nodes alike.
+            'steps.*.config.node' => ['required_if:steps.*.type,tool', 'string', 'max:100'],
             'steps.*.config.field' => ['required_if:steps.*.type,condition', 'string'],
             'steps.*.config.operator' => ['sometimes', Rule::in(['equals', 'not_equals', 'contains', 'gt', 'gte', 'lt', 'lte', 'truthy'])],
             'steps.*.config.mapping' => ['required_if:steps.*.type,transform', 'array'],

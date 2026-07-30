@@ -9,7 +9,7 @@ use App\Http\Resources\V1\Agents\AgentVersionResource;
 use App\Http\Responses\ApiResponse;
 use App\Models\Agents\Agent;
 use App\Models\Agents\AgentVersion;
-use App\Models\Tool;
+use App\Models\Nodes\Node;
 use App\Models\Workspaces\Workspace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,13 +52,21 @@ class AgentVersionController extends Controller
             'settings' => $snapshot['settings'],
         ]);
 
-        // Only re-attach tools that still exist in this workspace.
-        $toolIds = Tool::query()
-            ->where('workspace_id', $workspace->id)
-            ->whereIn('id', $snapshot['tool_ids'] ?? [])
+        // Only re-attach nodes still visible to this workspace, keeping each one's
+        // bound config and exposed fields as they were when the version was taken.
+        $attachments = collect($snapshot['nodes'] ?? [])->keyBy('node_id');
+
+        $visibleNodeIds = Node::query()
+            ->where(fn ($query) => $query->whereNull('workspace_id')->orWhere('workspace_id', $workspace->id))
+            ->whereIn('id', $attachments->keys())
             ->pluck('id');
 
-        $agent->tools()->sync($toolIds);
+        $agent->nodes()->sync(
+            $visibleNodeIds->mapWithKeys(fn (int $nodeId): array => [$nodeId => [
+                'config' => $attachments[$nodeId]['config'] ?? null,
+                'exposed_fields' => $attachments[$nodeId]['exposed_fields'] ?? null,
+            ]])->all(),
+        );
 
         // Restore never rewrites history — it becomes the next version.
         $agent->snapshotVersion($request->user());

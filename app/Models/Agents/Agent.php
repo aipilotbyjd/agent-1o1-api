@@ -2,8 +2,8 @@
 
 namespace App\Models\Agents;
 
+use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
 use Database\Factories\Agents\AgentFactory;
@@ -53,11 +53,17 @@ class Agent extends Model
     }
 
     /**
-     * @return BelongsToMany<Tool, $this>
+     * The catalog nodes this agent may call as tools, each carrying the config bound
+     * to it at attach time.
+     *
+     * @return BelongsToMany<Node, $this>
      */
-    public function tools(): BelongsToMany
+    public function nodes(): BelongsToMany
     {
-        return $this->belongsToMany(Tool::class)->withTimestamps();
+        return $this->belongsToMany(Node::class)
+            ->using(AgentNode::class)
+            ->withPivot(['config', 'exposed_fields'])
+            ->withTimestamps();
     }
 
     /**
@@ -126,7 +132,11 @@ class Agent extends Model
                 'model' => $this->model,
                 'temperature' => $this->temperature,
                 'settings' => $this->settings,
-                'tool_ids' => $this->tools()->pluck('tools.id')->all(),
+                'nodes' => $this->nodes()->get()->map(fn (Node $node): array => [
+                    'node_id' => $node->id,
+                    'config' => $node->pivot->config,
+                    'exposed_fields' => $node->pivot->exposed_fields,
+                ])->all(),
             ],
             'changed_by' => $changedBy?->id,
         ]);

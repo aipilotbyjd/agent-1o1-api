@@ -53,7 +53,6 @@ Route::prefix('v1')->as('v1.')->group(function (): void {
         Route::prefix('workspaces')->as('workspaces.')->middleware('workspace.context')->group(function (): void {
             require __DIR__.'/api/agents.php';
             require __DIR__.'/api/agent-skills.php';
-            require __DIR__.'/api/tools.php';
             require __DIR__.'/api/credentials.php';
             require __DIR__.'/api/variables.php';
             require __DIR__.'/api/nodes.php';

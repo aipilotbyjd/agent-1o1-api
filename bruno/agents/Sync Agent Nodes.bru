@@ -1,0 +1,56 @@
+meta {
+  name: Sync Agent Nodes
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/nodes
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "nodes": [
+      {
+        "node_id": 1,
+        "config": { "channel": "#alerts" },
+        "exposed_fields": ["text"]
+      },
+      {
+        "node_id": 2
+      }
+    ]
+  }
+}
+
+docs {
+  Replaces the set of nodes the agent may call as tools (pass `nodes: []` to detach
+  all). Every `node_id` must be a builtin catalog node or a custom node in this
+  workspace.
+
+  Each attachment may pin part of the node's config so the model cannot choose it:
+
+  - `config` fixes values (a credential, a Slack channel). Bound fields are hidden from
+    the model and merged in after whatever it supplies, so they can't be overridden.
+  - `exposed_fields` narrows what is left to the arguments worth asking a model to fill.
+    Omit it to offer every unbound field.
+
+  A new version is snapshotted when the attached set or its bindings actually change.
+  Requires the `agent.nodes.sync` permission.
+
+  Expected result:
+  - 200 with the agent's updated nodes.
+  - 422 if any `node_id` isn't visible to this workspace.
+  - 403 if the user lacks the `agent.nodes.sync` permission.
+}

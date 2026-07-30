@@ -2,8 +2,8 @@
 
 use App\Enums\Runs\RunStatus;
 use App\Enums\Runs\RunStepStatus;
+use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Variable;
 use App\Models\Workflows\Workflow;
@@ -88,16 +88,15 @@ it('fails a step that overruns its configured timeout', function () {
     }]);
 
     [$admin, $workspace] = resilienceWorkspace();
-    $tool = Tool::factory()->create([
-        'workspace_id' => $workspace->id,
-        'config' => ['url' => 'https://api.example.com/slow', 'method' => 'GET', 'parameters' => []],
-    ]);
+    $node = Node::factory()->custom()
+        ->callingUrl('https://api.example.com/slow')
+        ->create(['workspace_id' => $workspace->id]);
 
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
     $workflow->steps()->create([
         'key' => 'slow',
         'type' => 'tool',
-        'config' => ['tool_id' => $tool->id, 'arguments' => [], 'timeout_seconds' => 1],
+        'config' => ['node' => $node->type, 'timeout_seconds' => 1],
     ]);
     $workflow->publishVersion();
 

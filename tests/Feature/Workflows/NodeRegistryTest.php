@@ -3,10 +3,12 @@
 use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Nodes\Node;
 use App\Services\Workflows\Nodes\ConfigSchemaValidator;
+use App\Services\Workflows\Nodes\Custom\CustomNode;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeCatalogSync;
 use App\Services\Workflows\Nodes\NodeDefinition;
 use App\Services\Workflows\Nodes\NodeRegistry;
+use App\Services\Workflows\Nodes\NodeResolver;
 use App\Services\Workflows\Nodes\StepNodeResolver;
 
 it('registers a node definition for every workflow step type', function () {
@@ -85,9 +87,22 @@ it('resolves a step to the node that actually drives it', function () {
     $resolver = app(StepNodeResolver::class);
 
     expect($resolver->typeFor(['type' => 'transform', 'config' => []]))->toBe('core.transform')
-        ->and($resolver->typeFor(['type' => 'tool', 'config' => ['tool_id' => 1]]))->toBe('custom.http')
         ->and($resolver->typeFor(['type' => 'tool', 'config' => ['node' => 'slack.post_message']]))->toBe('slack.post_message')
         ->and($resolver->typeFor(['type' => 'nonsense', 'config' => []]))->toBeNull();
+});
+
+it('resolves a step to a workspace-authored node, not just the code registry', function () {
+    $node = Node::factory()->custom()->create();
+
+    expect(app(StepNodeResolver::class)->typeFor(['type' => 'tool', 'config' => ['node' => $node->type]]))
+        ->toBe($node->type)
+        ->and(app(NodeResolver::class)->executable($node->type))->toBeInstanceOf(CustomNode::class);
+});
+
+it('does not resolve a custom node that has been deactivated', function () {
+    $node = Node::factory()->custom()->create(['is_active' => false]);
+
+    expect(app(NodeResolver::class)->has($node->type))->toBeFalse();
 });
 
 describe('config schema validation', function () {

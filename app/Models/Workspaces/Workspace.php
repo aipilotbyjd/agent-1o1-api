@@ -16,7 +16,6 @@ use App\Models\Notifications\NotificationPreference;
 use App\Models\Runs\Run;
 use App\Models\Runs\RunLog;
 use App\Models\Runs\RunReplayPack;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Variable;
 use App\Models\Workflows\Folder;
@@ -97,14 +96,6 @@ class Workspace extends Model
     public function agents(): HasMany
     {
         return $this->hasMany(Agent::class);
-    }
-
-    /**
-     * @return HasMany<Tool, $this>
-     */
-    public function tools(): HasMany
-    {
-        return $this->hasMany(Tool::class);
     }
 
     /**

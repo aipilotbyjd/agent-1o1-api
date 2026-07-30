@@ -1,15 +1,15 @@
 <?php
 
+use App\Models\Nodes\Node;
 use App\Models\Runs\ConnectorMetric;
 use App\Models\Runs\Run;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Workflows\Workflow;
 use App\Models\Workspaces\LogStreamingConfig;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
 use App\Services\Runs\ConnectorMetricRecorder;
-use App\Services\Workflows\Nodes\Core\CustomHttpNode;
+use App\Services\Workflows\Nodes\NodeResolver;
 use Illuminate\Support\Facades\Http;
 
 function obsSetup(string $role = 'admin'): array
@@ -35,17 +35,21 @@ it('rolls connector calls up into daily metrics', function () {
         ->and($metric->total_duration_ms)->toBe(420);
 });
 
-it('records a connector metric when an http tool runs', function () {
-    Http::fake(['api.example.test/*' => Http::response(['ok' => true])]);
+it('records a connector metric against the custom node that ran, not the http primitive', function () {
+    Http::fake(['api.example.com/*' => Http::response(['ok' => true])]);
     [, $workspace] = obsSetup();
-    $tool = Tool::factory()->create([
-        'workspace_id' => $workspace->id,
-        'config' => ['method' => 'GET', 'url' => 'https://api.example.test/data'],
-    ]);
+    $node = Node::factory()->custom()
+        ->callingUrl('https://api.example.com/data')
+        ->create(['workspace_id' => $workspace->id]);
 
-    app(CustomHttpNode::class)->call($tool, []);
+    $run = Run::factory()->create(['workspace_id' => $workspace->id]);
 
-    expect(ConnectorMetric::query()->where('workspace_id', $workspace->id)->exists())->toBeTrue();
+    app(NodeResolver::class)->executable($node->type)->execute($run, [], []);
+
+    $metric = ConnectorMetric::query()->where('workspace_id', $workspace->id)->first();
+
+    expect($metric)->not->toBeNull()
+        ->and($metric->connector)->toBe($node->type);
 });
 
 it('lists and summarizes connector metrics', function () {

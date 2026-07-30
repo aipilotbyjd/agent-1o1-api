@@ -2,8 +2,8 @@
 
 use App\Ai\Agents\WorkspaceAgent;
 use App\Models\Agents\Agent;
+use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
@@ -50,24 +50,26 @@ it('snapshots a new version on behavioral change but not on rename', function ()
         ->and($agent->versions()->orderByDesc('version')->first()->snapshot['instructions'])->toBe('New behavior.');
 });
 
-it('snapshots a new version when tools change', function () {
+it('snapshots a new version when the attached nodes change', function () {
     [$admin, $workspace] = agentVersionSetup();
     $agent = Agent::factory()->create(['workspace_id' => $workspace->id]);
     $agent->snapshotVersion();
-    $tool = Tool::factory()->create(['workspace_id' => $workspace->id]);
+    $node = Node::factory()->custom()->create(['workspace_id' => $workspace->id]);
+
+    $attachment = ['node_id' => $node->id, 'config' => ['channel' => '#alerts'], 'exposed_fields' => ['text']];
 
     $this->withToken(authHeader($admin))->putJson(
-        "/api/v1/workspaces/{$workspace->id}/agents/{$agent->id}/tools",
-        ['tool_ids' => [$tool->id]],
+        "/api/v1/workspaces/{$workspace->id}/agents/{$agent->id}/nodes",
+        ['nodes' => [$attachment]],
     )->assertOk();
 
     expect($agent->versions()->count())->toBe(2)
-        ->and($agent->versions()->orderByDesc('version')->first()->snapshot['tool_ids'])->toBe([$tool->id]);
+        ->and($agent->versions()->orderByDesc('version')->first()->snapshot['nodes'])->toBe([$attachment]);
 
     // Syncing the same set again is a no-op.
     $this->withToken(authHeader($admin))->putJson(
-        "/api/v1/workspaces/{$workspace->id}/agents/{$agent->id}/tools",
-        ['tool_ids' => [$tool->id]],
+        "/api/v1/workspaces/{$workspace->id}/agents/{$agent->id}/nodes",
+        ['nodes' => [$attachment]],
     )->assertOk();
     expect($agent->versions()->count())->toBe(2);
 });

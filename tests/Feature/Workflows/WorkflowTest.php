@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Agents\Agent;
+use App\Models\Nodes\Node;
 use App\Models\User;
 use App\Models\Workflows\Workflow;
 use App\Models\Workflows\WorkflowStep;
@@ -57,6 +58,35 @@ it('saves a workflow graph', function () {
     $response->assertOk()
         ->assertJsonCount(2, 'data.steps')
         ->assertJsonPath('data.edges.0.from', 'summarize');
+});
+
+it('saves a tool step that names a workspace custom node and links it to that row', function () {
+    [$user, $workspace] = workflowWorkspace();
+    $workflow = Workflow::factory()->create(['workspace_id' => $workspace->id]);
+    $node = Node::factory()->custom()->create(['workspace_id' => $workspace->id]);
+
+    $this->withToken(authHeader($user))->putJson(
+        "/api/v1/workspaces/{$workspace->id}/workflows/{$workflow->id}/graph",
+        [
+            'steps' => [['key' => 'lookup', 'type' => 'tool', 'config' => ['node' => $node->type]]],
+            'edges' => [],
+        ],
+    )->assertOk();
+
+    expect($workflow->steps()->where('key', 'lookup')->first()->node_id)->toBe($node->id);
+});
+
+it('rejects a tool step that names no node', function () {
+    [$user, $workspace] = workflowWorkspace();
+    $workflow = Workflow::factory()->create(['workspace_id' => $workspace->id]);
+
+    $this->withToken(authHeader($user))->putJson(
+        "/api/v1/workspaces/{$workspace->id}/workflows/{$workflow->id}/graph",
+        [
+            'steps' => [['key' => 'lookup', 'type' => 'tool', 'config' => []]],
+            'edges' => [],
+        ],
+    )->assertStatus(422);
 });
 
 it('rejects a graph with an edge to an unknown step', function () {

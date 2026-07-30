@@ -188,12 +188,10 @@ use App\Services\Workflows\Nodes\Apps\Twitter\TwitterPostTweetNode;
 use App\Services\Workflows\Nodes\Apps\Twitter\TwitterSearchTweetsNode;
 use App\Services\Workflows\Nodes\Core\AgentNode;
 use App\Services\Workflows\Nodes\Core\CodeNode;
-use App\Services\Workflows\Nodes\Core\CustomHttpNode;
 use App\Services\Workflows\Nodes\Core\HttpRequestNode;
 use App\Services\Workflows\Nodes\Core\HumanApprovalNode;
 use App\Services\Workflows\Nodes\Core\SetVariableNode;
 use App\Services\Workflows\Nodes\Core\SubWorkflowNode;
-use App\Services\Workflows\Nodes\Core\ToolNode;
 use App\Services\Workflows\Nodes\Core\TransformNode;
 use App\Services\Workflows\Nodes\Core\TriggerNode;
 use App\Services\Workflows\Nodes\Flow\ConditionNode;
@@ -219,7 +217,6 @@ class WorkflowServiceProvider extends ServiceProvider
     private const NODES = [
         // Core flow control — executed by the engine itself.
         AgentNode::class,
-        ToolNode::class,
         ConditionNode::class,
         MergeNode::class,
         TransformNode::class,
@@ -235,7 +232,6 @@ class WorkflowServiceProvider extends ServiceProvider
 
         // Connectors — executed by their own definition.
         HttpRequestNode::class,
-        CustomHttpNode::class,
         CodeNode::class,
 
         // Communication

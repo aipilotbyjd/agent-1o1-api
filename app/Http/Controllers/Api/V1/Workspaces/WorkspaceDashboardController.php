@@ -47,7 +47,7 @@ class WorkspaceDashboardController extends Controller
             'counts' => [
                 'workflows' => $workspace->workflows()->count(),
                 'agents' => $workspace->agents()->count(),
-                'tools' => $workspace->tools()->count(),
+                'nodes' => $workspace->nodes()->count(),
                 'members' => $workspace->members()->count(),
             ],
             'runs_last_30_days' => [

@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\Runs\RunStatus;
+use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
-use App\Models\Tool;
 use App\Models\User;
 use App\Models\Workflows\Workflow;
 use App\Models\Workspaces\Workspace;
@@ -25,17 +25,16 @@ it('exposes an http tool response as structured output a later step can read int
 
     [$admin, $workspace] = toolOutputWorkspace();
 
-    $tool = Tool::factory()->create([
-        'workspace_id' => $workspace->id,
-        'config' => ['url' => 'https://api.example.com/lookup', 'method' => 'GET', 'parameters' => []],
-    ]);
+    $node = Node::factory()->custom()
+        ->callingUrl('https://api.example.com/lookup')
+        ->create(['workspace_id' => $workspace->id]);
 
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
 
     $fetch = $workflow->steps()->create([
         'key' => 'fetch',
         'type' => 'tool',
-        'config' => ['tool_id' => $tool->id, 'arguments' => []],
+        'config' => ['node' => $node->type],
     ]);
     $use = $workflow->steps()->create([
         'key' => 'use_it',
@@ -73,16 +72,15 @@ it('reports a non-2xx response as a structured failure without throwing', functi
 
     [$admin, $workspace] = toolOutputWorkspace();
 
-    $tool = Tool::factory()->create([
-        'workspace_id' => $workspace->id,
-        'config' => ['url' => 'https://api.example.com/lookup', 'method' => 'GET', 'parameters' => []],
-    ]);
+    $node = Node::factory()->custom()
+        ->callingUrl('https://api.example.com/lookup')
+        ->create(['workspace_id' => $workspace->id]);
 
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
     $workflow->steps()->create([
         'key' => 'fetch',
         'type' => 'tool',
-        'config' => ['tool_id' => $tool->id, 'arguments' => []],
+        'config' => ['node' => $node->type],
     ]);
     $workflow->publishVersion();
 
@@ -102,20 +100,20 @@ it('sends typed json arguments rather than stringified ones', function () {
 
     [$admin, $workspace] = toolOutputWorkspace();
 
-    $tool = Tool::factory()->create([
-        'workspace_id' => $workspace->id,
-        'config' => ['url' => 'https://api.example.com/create', 'method' => 'POST', 'parameters' => []],
-    ]);
+    $node = Node::factory()->custom()
+        ->callingUrl('https://api.example.com/create', 'POST')
+        ->create(['workspace_id' => $workspace->id]);
 
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
     $workflow->steps()->create([
         'key' => 'create',
         'type' => 'tool',
-        'config' => ['tool_id' => $tool->id, 'arguments' => [
+        'config' => [
+            'node' => $node->type,
             'count' => '{{ input.count }}',
             'active' => '{{ input.active }}',
             'nested' => ['label' => '{{ input.label }}'],
-        ]],
+        ],
     ]);
     $workflow->publishVersion();
 
@@ -134,16 +132,15 @@ it('sends typed json arguments rather than stringified ones', function () {
 it('refuses to call a private network address', function () {
     [$admin, $workspace] = toolOutputWorkspace();
 
-    $tool = Tool::factory()->create([
-        'workspace_id' => $workspace->id,
-        'config' => ['url' => 'http://127.0.0.1/admin', 'method' => 'GET', 'parameters' => []],
-    ]);
+    $node = Node::factory()->custom()
+        ->callingUrl('http://127.0.0.1/admin')
+        ->create(['workspace_id' => $workspace->id]);
 
     $workflow = Workflow::factory()->published()->create(['workspace_id' => $workspace->id]);
     $workflow->steps()->create([
         'key' => 'fetch',
         'type' => 'tool',
-        'config' => ['tool_id' => $tool->id, 'arguments' => []],
+        'config' => ['node' => $node->type],
     ]);
     $workflow->publishVersion();
 

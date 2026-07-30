@@ -46,8 +46,43 @@ class NodeFactory extends Factory
         ];
     }
 
+    /**
+     * A workspace-authored node: it carries its own call definition, so it is
+     * executable and can be attached to an agent as a tool.
+     */
     public function custom(): static
     {
-        return $this->state(fn (): array => ['is_custom' => true, 'workspace_id' => Workspace::factory()]);
+        return $this->state(fn (): array => [
+            'is_custom' => true,
+            'workspace_id' => Workspace::factory(),
+            'config' => ['url' => 'https://api.example.com/lookup', 'method' => 'GET'],
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    public function callingUrl(string $url, string $method = 'GET', array $config = []): static
+    {
+        return $this->state(fn (): array => [
+            'config' => ['url' => $url, 'method' => $method, ...$config],
+        ]);
+    }
+
+    /**
+     * Give the node a config schema whose fields act as its call arguments.
+     *
+     * @param  array<string, mixed>  $properties
+     * @param  array<int, string>  $required
+     */
+    public function withArguments(array $properties, array $required = []): static
+    {
+        return $this->state(fn (): array => [
+            'config_schema' => array_filter([
+                'type' => 'object',
+                'properties' => $properties,
+                'required' => $required === [] ? null : $required,
+            ]),
+        ]);
     }
 }
