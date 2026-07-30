@@ -6,6 +6,7 @@ use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
+use RuntimeException;
 
 class DataNode extends NodeDefinition implements ExecutableNode
 {
@@ -77,7 +78,7 @@ class DataNode extends NodeDefinition implements ExecutableNode
             'omit' => ['result' => array_diff_key((array) $data, array_flip((array) ($config['keys'] ?? [])))],
             'rename_keys' => $this->renameKeys((array) $data, $config),
             'default' => ['result' => $data],
-            default => throw new \RuntimeException("Data: unknown operation '{$operation}'"),
+            default => throw new RuntimeException("Data: unknown operation '{$operation}'"),
         };
     }
 

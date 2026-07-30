@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class SlackUploadFileNode extends AppNode
 {
@@ -89,7 +90,7 @@ class SlackUploadFileNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Slack upload_file error: '.($body['error'] ?? 'unknown'));
+            throw new RuntimeException('Slack upload_file error: '.($body['error'] ?? 'unknown'));
         }
 
         return ['file' => $body['file'] ?? []];

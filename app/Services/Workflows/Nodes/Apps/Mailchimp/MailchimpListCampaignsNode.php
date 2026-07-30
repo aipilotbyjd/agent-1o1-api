@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class MailchimpListCampaignsNode extends AppNode
 {
@@ -62,12 +64,12 @@ class MailchimpListCampaignsNode extends AppNode
         try {
             $response = $this->mcHttp($credential)->get('/campaigns', array_filter(['count' => $config['count'] ?? 10, 'status' => $config['status'] ?? null]));
             if (! $response->successful()) {
-                throw new \RuntimeException('Mailchimp list_campaigns failed: '.$response->body());
+                throw new RuntimeException('Mailchimp list_campaigns failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

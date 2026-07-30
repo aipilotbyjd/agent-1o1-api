@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class MailchimpRemoveSubscriberNode extends AppNode
 {
@@ -66,12 +68,12 @@ class MailchimpRemoveSubscriberNode extends AppNode
         try {
             $response = $this->mcHttp($credential)->patch("/lists/{$config['list_id']}/members/{$hash}", ['status' => 'unsubscribed']);
             if (! $response->successful()) {
-                throw new \RuntimeException('Mailchimp remove_subscriber failed: '.$response->body());
+                throw new RuntimeException('Mailchimp remove_subscriber failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return ['removed' => true];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

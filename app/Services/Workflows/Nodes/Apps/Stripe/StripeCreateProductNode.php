@@ -4,10 +4,10 @@ namespace App\Services\Workflows\Nodes\Apps\Stripe;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class StripeCreateProductNode extends AppNode
+class StripeCreateProductNode extends StripeNode
 {
     private const BASE_URL = 'https://api.stripe.com/v1';
 
@@ -61,24 +61,12 @@ class StripeCreateProductNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $apiKey = $credential->data['secret_key'] ?? $credential->data['api_key'] ?? '';
-
-        $response = Http::timeout(15)
-            ->withBasicAuth($apiKey, '')
-            ->asForm()
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->post(self::BASE_URL.'/products', [
                 'name' => $config['name'],
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Stripe create_product failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

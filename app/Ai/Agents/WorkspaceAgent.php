@@ -11,11 +11,13 @@ use App\Models\Agents\AgentSkill;
 use App\Models\Agents\DocumentEmbedding;
 use App\Models\Nodes\Node;
 use App\Models\Runs\Run;
+use App\Models\User;
 use Laravel\Ai\Concerns\RemembersConversations;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Promptable;
+use Laravel\Ai\Responses\AgentResponse;
 
 class WorkspaceAgent implements Agent, Conversational, HasTools
 {
@@ -25,6 +27,37 @@ class WorkspaceAgent implements Agent, Conversational, HasTools
         public AgentModel $agentModel,
         public ?Run $run = null,
     ) {}
+
+    /**
+     * Prompt the agent with the provider and model its record configures.
+     *
+     * Every caller was passing `provider: $agent->provider, model: $agent->model` by
+     * hand, which is not a choice any of them were making — it belongs to the agent.
+     */
+    public function ask(string $message): AgentResponse
+    {
+        return $this->prompt(
+            $message,
+            provider: $this->agentModel->provider,
+            model: $this->agentModel->model,
+        );
+    }
+
+    /**
+     * The same, continuing an existing conversation on a user's behalf.
+     */
+    public function askAs(string $message, User $user, ?string $conversationId = null): AgentResponse
+    {
+        $pending = $conversationId !== null
+            ? $this->continue($conversationId, as: $user)
+            : $this->forUser($user);
+
+        return $pending->prompt(
+            $message,
+            provider: $this->agentModel->provider,
+            model: $this->agentModel->model,
+        );
+    }
 
     /**
      * Base instructions plus curated knowledge base entries and remembered facts, so the

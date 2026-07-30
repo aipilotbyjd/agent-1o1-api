@@ -7,6 +7,7 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class StringNode extends NodeDefinition implements ExecutableNode
 {
@@ -93,7 +94,7 @@ class StringNode extends NodeDefinition implements ExecutableNode
             'pad' => ['result' => str_pad($text, (int) ($config['length'] ?? 0), $config['pad'] ?? ' ')],
             'regex_match' => $this->regexMatch($text, $config),
             'regex_replace' => ['result' => preg_replace($config['pattern'] ?? '//', $config['replace'] ?? '', $text)],
-            default => throw new \RuntimeException("String: unknown operation '{$operation}'"),
+            default => throw new RuntimeException("String: unknown operation '{$operation}'"),
         };
     }
 

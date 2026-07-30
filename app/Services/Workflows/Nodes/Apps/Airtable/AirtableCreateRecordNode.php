@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Airtable;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class AirtableCreateRecordNode extends AppNode
+class AirtableCreateRecordNode extends HttpAppNode
 {
     private const BASE_URL = 'https://api.airtable.com/v0';
 
@@ -62,14 +63,9 @@ class AirtableCreateRecordNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
-        $response = Http::timeout(15)->withToken($credential->data['token'] ?? '')->post(self::BASE_URL."/{$config['base_id']}/{$config['table']}", ['fields' => $config['fields'] ?? []]);
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-        if (! $ok) {
-            throw new \RuntimeException('Airtable create_record failed: '.$response->body());
-        }
 
-        return $response->json() ?? [];
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http->post(self::BASE_URL."/{$config['base_id']}/{$config['table']}", ['fields' => $config['fields'] ?? []]));
+
+        return $data;
     }
 }

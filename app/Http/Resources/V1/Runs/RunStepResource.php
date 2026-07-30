@@ -25,6 +25,17 @@ class RunStepResource extends JsonResource
             'usage' => $this->usage,
             'started_at' => $this->started_at,
             'finished_at' => $this->finished_at,
+
+            // Only present while a wait step is parked — this is the URL the external
+            // system posts to in order to resume the run, so it disappears once used.
+            'callback_url' => $this->when(
+                $this->callback_token !== null,
+                fn (): string => route('v1.run-callbacks.resume', ['token' => $this->callback_token]),
+            ),
+            'callback_expires_at' => $this->when(
+                $this->callback_token !== null,
+                fn () => $this->callback_expires_at,
+            ),
         ];
     }
 }

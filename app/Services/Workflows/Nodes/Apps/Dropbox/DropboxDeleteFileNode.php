@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Dropbox;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class DropboxDeleteFileNode extends AppNode
+class DropboxDeleteFileNode extends HttpAppNode
 {
     private const BASE_URL = 'https://api.dropboxapi.com/2';
 
@@ -57,13 +58,8 @@ class DropboxDeleteFileNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
-        $response = Http::timeout(15)->withToken($credential->data['token'] ?? '')->post(self::BASE_URL.'/files/delete_v2', ['path' => $config['path']]);
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-        if (! $ok) {
-            throw new \RuntimeException('Dropbox delete_file failed: '.$response->body());
-        }
+
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http->post(self::BASE_URL.'/files/delete_v2', ['path' => $config['path']]));
 
         return ['deleted' => true];
     }

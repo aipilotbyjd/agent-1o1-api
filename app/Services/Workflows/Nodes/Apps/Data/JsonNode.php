@@ -6,6 +6,7 @@ use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
+use RuntimeException;
 
 class JsonNode extends NodeDefinition implements ExecutableNode
 {
@@ -75,7 +76,7 @@ class JsonNode extends NodeDefinition implements ExecutableNode
             'merge' => ['result' => array_merge((array) ($config['data'] ?? []), (array) ($config['with'] ?? []))],
             'keys' => ['result' => array_keys((array) ($config['data'] ?? []))],
             'values' => ['result' => array_values((array) ($config['data'] ?? []))],
-            default => throw new \RuntimeException("Json: unknown operation '{$operation}'"),
+            default => throw new RuntimeException("Json: unknown operation '{$operation}'"),
         };
     }
 
@@ -84,7 +85,7 @@ class JsonNode extends NodeDefinition implements ExecutableNode
         $decoded = json_decode($config['json'] ?? '', true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('JSON parse error: '.json_last_error_msg());
+            throw new RuntimeException('JSON parse error: '.json_last_error_msg());
         }
 
         return ['result' => $decoded];

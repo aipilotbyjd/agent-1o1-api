@@ -4,10 +4,10 @@ namespace App\Services\Workflows\Nodes\Apps\Stripe;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class StripeCreatePriceNode extends AppNode
+class StripeCreatePriceNode extends StripeNode
 {
     private const BASE_URL = 'https://api.stripe.com/v1';
 
@@ -64,9 +64,6 @@ class StripeCreatePriceNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
-
-        $apiKey = $credential->data['secret_key'] ?? $credential->data['api_key'] ?? '';
 
         $body = [
             'product' => $config['product_id'],
@@ -78,18 +75,9 @@ class StripeCreatePriceNode extends AppNode
             $body['recurring'] = ['interval' => $config['interval']];
         }
 
-        $response = Http::timeout(15)
-            ->withBasicAuth($apiKey, '')
-            ->asForm()
-            ->post(self::BASE_URL.'/prices', $body);
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
+            ->post(self::BASE_URL.'/prices', $body));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Stripe create_price failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

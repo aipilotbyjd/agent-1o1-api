@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class SalesforceGetRecordNode extends AppNode
 {
@@ -62,12 +64,12 @@ class SalesforceGetRecordNode extends AppNode
         try {
             $response = $this->sfHttp($credential)->get("/sobjects/{$config['object']}/{$config['record_id']}");
             if (! $response->successful()) {
-                throw new \RuntimeException('Salesforce get_record failed: '.$response->body());
+                throw new RuntimeException('Salesforce get_record failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

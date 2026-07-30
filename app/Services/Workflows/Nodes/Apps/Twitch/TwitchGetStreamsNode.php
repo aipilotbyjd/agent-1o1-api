@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class TwitchGetStreamsNode extends AppNode
 {
@@ -62,12 +64,12 @@ class TwitchGetStreamsNode extends AppNode
         try {
             $response = $this->twitchHttp($credential)->get('/streams', array_filter(['user_login' => $config['user_login'] ?? null, 'game_id' => $config['game_id'] ?? null, 'first' => $config['limit'] ?? 20]));
             if (! $response->successful()) {
-                throw new \RuntimeException('Twitch get_streams failed: '.$response->body());
+                throw new RuntimeException('Twitch get_streams failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

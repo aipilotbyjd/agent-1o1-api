@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class MailchimpAddTagNode extends AppNode
 {
@@ -63,12 +65,12 @@ class MailchimpAddTagNode extends AppNode
         try {
             $response = $this->mcHttp($credential)->post("/lists/{$config['list_id']}/members/{$hash}/tags", ['tags' => [['name' => $config['tag'], 'status' => 'active']]]);
             if (! $response->successful()) {
-                throw new \RuntimeException('Mailchimp add_tag failed: '.$response->body());
+                throw new RuntimeException('Mailchimp add_tag failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return ['tagged' => true];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

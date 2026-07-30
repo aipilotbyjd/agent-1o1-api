@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class GitHubListReposNode extends AppNode
 {
@@ -87,7 +88,7 @@ class GitHubListReposNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('GitHub list_repos failed: '.$response->body());
+            throw new RuntimeException('GitHub list_repos failed: '.$response->body());
         }
 
         return ['repos' => $response->json() ?? []];

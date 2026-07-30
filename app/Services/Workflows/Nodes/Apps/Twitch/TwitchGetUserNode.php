@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class TwitchGetUserNode extends AppNode
 {
@@ -62,12 +64,12 @@ class TwitchGetUserNode extends AppNode
         try {
             $response = $this->twitchHttp($credential)->get('/users', ['login' => $config['login'] ?? '']);
             if (! $response->successful()) {
-                throw new \RuntimeException('Twitch get_user failed: '.$response->body());
+                throw new RuntimeException('Twitch get_user failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

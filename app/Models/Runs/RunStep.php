@@ -4,6 +4,7 @@ namespace App\Models\Runs;
 
 use App\Enums\Runs\RunStepStatus;
 use App\Events\RunStepUpdated;
+use Carbon\CarbonInterface;
 use Database\Factories\Runs\RunStepFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'run_id', 'key', 'type', 'status', 'input', 'output',
     'error', 'usage', 'started_at', 'finished_at',
     'attempt', 'max_attempts', 'retry_delay_seconds', 'loop_index',
+    'callback_token', 'callback_expires_at',
 ])]
 class RunStep extends Model
 {
@@ -45,6 +47,7 @@ class RunStep extends Model
             'max_attempts' => 'integer',
             'retry_delay_seconds' => 'integer',
             'loop_index' => 'integer',
+            'callback_expires_at' => 'datetime',
         ];
     }
 
@@ -82,6 +85,17 @@ class RunStep extends Model
     public function markAwaitingApproval(): void
     {
         $this->transitionTo(RunStepStatus::AwaitingApproval);
+    }
+
+    /**
+     * Park the step until its callback URL is hit, or the deadline passes.
+     */
+    public function markAwaitingCallback(string $token, CarbonInterface $expiresAt): void
+    {
+        $this->transitionTo(RunStepStatus::AwaitingCallback, [
+            'callback_token' => $token,
+            'callback_expires_at' => $expiresAt,
+        ]);
     }
 
     public function markSkipped(): void

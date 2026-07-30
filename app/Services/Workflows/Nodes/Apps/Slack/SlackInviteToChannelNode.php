@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class SlackInviteToChannelNode extends AppNode
 {
@@ -87,7 +88,7 @@ class SlackInviteToChannelNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Slack invite_to_channel error: '.($body['error'] ?? 'unknown'));
+            throw new RuntimeException('Slack invite_to_channel error: '.($body['error'] ?? 'unknown'));
         }
 
         return ['invited' => true];

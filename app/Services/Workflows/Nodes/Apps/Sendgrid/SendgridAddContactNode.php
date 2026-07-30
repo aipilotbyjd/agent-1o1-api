@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class SendgridAddContactNode extends AppNode
 {
@@ -86,7 +87,7 @@ class SendgridAddContactNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Sendgrid add_contact failed: '.$response->body());
+            throw new RuntimeException('Sendgrid add_contact failed: '.$response->body());
         }
 
         return $response->json() ?? [];

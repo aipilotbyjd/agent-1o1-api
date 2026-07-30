@@ -4,10 +4,10 @@ namespace App\Services\Workflows\Nodes\Apps\Jira;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class JiraUpdateIssueNode extends AppNode
+class JiraUpdateIssueNode extends JiraNode
 {
     public function type(): string
     {
@@ -66,22 +66,11 @@ class JiraUpdateIssueNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $domain = $credential->data['domain'] ?? $config['domain'] ?? '';
-
-        $response = Http::timeout(15)
-            ->withBasicAuth($credential->data['email'] ?? '', $credential->data['api_token'] ?? $credential->data['password'] ?? '')
-            ->put("https://{$domain}/rest/api/3/issue/{$config['issue_key']}", [
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
+            ->put($this->baseUrl($credential, $config)."/issue/{$config['issue_key']}", [
                 'fields' => $config['fields'],
-            ]);
-
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Jira update_issue failed: '.$response->body());
-        }
+            ]));
 
         return ['updated' => true];
     }

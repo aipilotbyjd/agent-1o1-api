@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class GoogleSheetsLookupRowsNode extends AppNode
 {
@@ -87,7 +88,7 @@ class GoogleSheetsLookupRowsNode extends AppNode
 
         if (! $response->successful()) {
             $this->recordMetric($run, false, $startedAt);
-            throw new \RuntimeException('GoogleSheets lookup_rows failed: '.$response->body());
+            throw new RuntimeException('GoogleSheets lookup_rows failed: '.$response->body());
         }
 
         $data = $response->json() ?? [];

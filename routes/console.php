@@ -10,5 +10,6 @@ Artisan::command('inspire', function () {
 
 Schedule::command('triggers:fire-due-schedule')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('triggers:queue-due-polling')->everyMinute()->withoutOverlapping()->onOneServer();
+Schedule::command('workflows:expire-waiting-callbacks')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('billing:rollover-credits')->daily()->withoutOverlapping()->onOneServer();
 Schedule::command('billing:notify-trial-ending')->daily()->withoutOverlapping()->onOneServer();

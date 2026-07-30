@@ -3,6 +3,7 @@
 namespace App\Services\Agents;
 
 use App\Ai\Agents\EvalJudgeAgent;
+use App\Enums\Agents\AssertionType;
 use App\Models\Agents\Agent;
 use App\Models\Agents\AgentEvalCase;
 use App\Models\Agents\AgentEvalRun;
@@ -19,7 +20,13 @@ use Throwable;
  */
 class AgentEvalService
 {
-    public const ASSERTION_TYPES = ['contains', 'not_contains', 'equals', 'regex', 'llm_rubric'];
+    /**
+     * @return array<int, string>
+     */
+    public static function assertionTypes(): array
+    {
+        return AssertionType::values();
+    }
 
     public function __construct(private readonly AgentChatService $chat) {}
 
@@ -114,33 +121,16 @@ class AgentEvalService
      */
     private function evaluateAssertion(Agent $agent, string $input, string $output, array $assertion): ?string
     {
-        $type = $assertion['type'] ?? 'contains';
+        $type = AssertionType::tryFrom((string) ($assertion['type'] ?? AssertionType::Contains->value));
         $value = (string) ($assertion['value'] ?? '');
-        $lower = fn (string $text): string => mb_strtolower($text);
 
-        return match ($type) {
-            'contains' => str_contains($lower($output), $lower($value))
-                ? null
-                : "Expected output to contain \"{$value}\".",
-            'not_contains' => ! str_contains($lower($output), $lower($value))
-                ? null
-                : "Expected output NOT to contain \"{$value}\".",
-            'equals' => trim($lower($output)) === trim($lower($value))
-                ? null
-                : "Expected output to equal \"{$value}\".",
-            'regex' => $this->regexMatches($value, $output)
-                ? null
-                : "Expected output to match /{$value}/.",
-            'llm_rubric' => $this->judgeRubric($agent, $input, $output, $value),
-            default => "Unknown assertion type \"{$type}\".",
-        };
-    }
+        if ($type === null) {
+            return 'Unknown assertion type "'.($assertion['type'] ?? '').'".';
+        }
 
-    private function regexMatches(string $pattern, string $subject): bool
-    {
-        $delimited = '/'.str_replace('/', '\/', $pattern).'/i';
-
-        return @preg_match($delimited, $subject) === 1;
+        return $type->needsJudge()
+            ? $this->judgeRubric($agent, $input, $output, $value)
+            : $type->check($output, $value);
     }
 
     private function judgeRubric(Agent $agent, string $input, string $output, string $rubric): ?string

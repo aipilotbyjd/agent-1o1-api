@@ -24,12 +24,11 @@ class GraphValidator
      */
     public function issues(array $graph): array
     {
-        $steps = $graph['steps'] ?? [];
-        $edges = $graph['edges'] ?? [];
+        $graph = WorkflowGraph::fromArray($graph);
 
         $issues = [
-            ...$this->duplicateKeyIssues($steps),
-            ...$this->danglingEdgeIssues($steps, $edges),
+            ...$this->duplicateKeyIssues($graph),
+            ...$this->danglingEdgeIssues($graph),
         ];
 
         // A graph with dangling edges cannot be traversed reliably, so reachability and
@@ -39,10 +38,10 @@ class GraphValidator
         }
 
         return [
-            ...$this->cycleIssues($steps, $edges),
-            ...$this->entryIssues($steps, $edges),
-            ...$this->reachabilityIssues($steps, $edges),
-            ...$this->configIssues($steps),
+            ...$this->cycleIssues($graph),
+            ...$this->entryIssues($graph),
+            ...$this->reachabilityIssues($graph),
+            ...$this->configIssues($graph),
         ];
     }
 
@@ -55,12 +54,11 @@ class GraphValidator
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $steps
      * @return array<int, string>
      */
-    private function duplicateKeyIssues(array $steps): array
+    private function duplicateKeyIssues(WorkflowGraph $graph): array
     {
-        $counts = array_count_values(array_column($steps, 'key'));
+        $counts = array_count_values($graph->stepKeys());
 
         return array_values(array_map(
             fn (string $key): string => "Step key [{$key}] is used more than once.",
@@ -69,16 +67,14 @@ class GraphValidator
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $steps
-     * @param  array<int, array<string, mixed>>  $edges
      * @return array<int, string>
      */
-    private function danglingEdgeIssues(array $steps, array $edges): array
+    private function danglingEdgeIssues(WorkflowGraph $graph): array
     {
-        $keys = array_column($steps, 'key');
+        $keys = $graph->stepKeys();
         $issues = [];
 
-        foreach ($edges as $edge) {
+        foreach ($graph->edges() as $edge) {
             foreach (['from', 'to'] as $end) {
                 if (! in_array($edge[$end] ?? null, $keys, true)) {
                     $issues[] = "Edge [{$edge['from']} -> {$edge['to']}] points at a step that does not exist.";
@@ -94,13 +90,11 @@ class GraphValidator
     /**
      * Depth-first search, reporting the first step found on each back edge.
      *
-     * @param  array<int, array<string, mixed>>  $steps
-     * @param  array<int, array<string, mixed>>  $edges
      * @return array<int, string>
      */
-    private function cycleIssues(array $steps, array $edges): array
+    private function cycleIssues(WorkflowGraph $graph): array
     {
-        $adjacency = $this->adjacency($edges);
+        $adjacency = $graph->adjacency();
         $state = [];
         $issues = [];
 
@@ -122,7 +116,7 @@ class GraphValidator
             $state[$key] = 'visited';
         };
 
-        foreach (array_column($steps, 'key') as $key) {
+        foreach ($graph->stepKeys() as $key) {
             if (($state[$key] ?? null) === null) {
                 $visit($key);
             }
@@ -132,37 +126,31 @@ class GraphValidator
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $steps
-     * @param  array<int, array<string, mixed>>  $edges
      * @return array<int, string>
      */
-    private function entryIssues(array $steps, array $edges): array
+    private function entryIssues(WorkflowGraph $graph): array
     {
-        if ($steps === []) {
+        if ($graph->isEmpty()) {
             return ['The graph has no steps.'];
         }
 
-        return $this->entryKeys($steps, $edges) === []
+        return $graph->entryKeys() === []
             ? ['The graph has no entry step — every step has an incoming edge.']
             : [];
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $steps
-     * @param  array<int, array<string, mixed>>  $edges
      * @return array<int, string>
      */
-    private function reachabilityIssues(array $steps, array $edges): array
+    private function reachabilityIssues(WorkflowGraph $graph): array
     {
-        $entries = $this->entryKeys($steps, $edges);
+        $queue = $graph->entryKeys();
 
-        if ($entries === []) {
+        if ($queue === []) {
             return [];
         }
 
-        $adjacency = $this->adjacency($edges);
         $reached = [];
-        $queue = $entries;
 
         while ($queue !== []) {
             $key = array_shift($queue);
@@ -173,7 +161,7 @@ class GraphValidator
 
             $reached[$key] = true;
 
-            foreach ($adjacency[$key] ?? [] as $next) {
+            foreach ($graph->successorKeys($key) as $next) {
                 $queue[] = $next;
             }
         }
@@ -181,21 +169,20 @@ class GraphValidator
         return array_values(array_map(
             fn (string $key): string => "Step [{$key}] is unreachable from any entry step.",
             array_filter(
-                array_column($steps, 'key'),
+                $graph->stepKeys(),
                 fn (string $key): bool => ! isset($reached[$key]),
             ),
         ));
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $steps
      * @return array<int, string>
      */
-    private function configIssues(array $steps): array
+    private function configIssues(WorkflowGraph $graph): array
     {
         $issues = [];
 
-        foreach ($steps as $step) {
+        foreach ($graph->steps() as $step) {
             $definition = $this->resolver->definitionFor($step);
 
             if ($definition === null) {
@@ -212,35 +199,5 @@ class GraphValidator
         }
 
         return $issues;
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $steps
-     * @param  array<int, array<string, mixed>>  $edges
-     * @return array<int, string>
-     */
-    private function entryKeys(array $steps, array $edges): array
-    {
-        $targets = array_column($edges, 'to');
-
-        return array_values(array_filter(
-            array_column($steps, 'key'),
-            fn (string $key): bool => ! in_array($key, $targets, true),
-        ));
-    }
-
-    /**
-     * @param  array<int, array<string, mixed>>  $edges
-     * @return array<string, array<int, string>>
-     */
-    private function adjacency(array $edges): array
-    {
-        $adjacency = [];
-
-        foreach ($edges as $edge) {
-            $adjacency[$edge['from']][] = $edge['to'];
-        }
-
-        return $adjacency;
     }
 }

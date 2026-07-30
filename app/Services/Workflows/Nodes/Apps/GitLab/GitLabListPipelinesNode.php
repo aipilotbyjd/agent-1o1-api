@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class GitLabListPipelinesNode extends AppNode
 {
@@ -89,7 +90,7 @@ class GitLabListPipelinesNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('GitLab list_pipelines failed: '.$response->body());
+            throw new RuntimeException('GitLab list_pipelines failed: '.$response->body());
         }
 
         return ['pipelines' => $response->json() ?? []];

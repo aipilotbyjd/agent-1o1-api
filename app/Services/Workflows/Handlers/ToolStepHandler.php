@@ -4,6 +4,7 @@ namespace App\Services\Workflows\Handlers;
 
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\NodeResolver;
+use App\Services\Workflows\StepOptions;
 use App\Services\Workflows\TemplateResolver;
 use InvalidArgumentException;
 
@@ -40,7 +41,7 @@ class ToolStepHandler implements StepHandler
 
         // Engine-level keys are stripped so a connector only sees its own config.
         $resolved = $this->templates->resolveArray(
-            array_diff_key($config, array_flip(['node', 'max_attempts', 'retry_delay_seconds', 'timeout_seconds', 'continue_on_error'])),
+            StepOptions::stripReserved($config),
             $context,
         );
 

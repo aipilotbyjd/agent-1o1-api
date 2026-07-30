@@ -3,6 +3,7 @@
 namespace App\Services\Workflows\Handlers;
 
 use App\Models\Runs\Run;
+use App\Services\Workflows\SafePattern;
 use App\Services\Workflows\TemplateResolver;
 
 class ConditionStepHandler implements StepHandler
@@ -37,7 +38,7 @@ class ConditionStepHandler implements StepHandler
                 : ! str_contains($leftString, $rightString),
             'starts_with' => str_starts_with($leftString, $rightString),
             'ends_with' => str_ends_with($leftString, $rightString),
-            'matches' => $this->matches($leftString, $rightString),
+            'matches' => SafePattern::matches($rightString, $leftString),
             'in' => in_array($leftString, $this->listFrom($right), true),
             'not_in' => ! in_array($leftString, $this->listFrom($right), true),
             'exists' => $left !== null,
@@ -88,14 +89,5 @@ class ConditionStepHandler implements StepHandler
         }
 
         return array_map('trim', explode(',', (string) $value));
-    }
-
-    private function matches(string $subject, string $pattern): bool
-    {
-        // A workspace-authored pattern must not be able to break the delimiter or set
-        // its own modifiers, so it is quoted into a fixed one.
-        $result = @preg_match('/'.str_replace('/', '\/', $pattern).'/', $subject);
-
-        return $result === 1;
     }
 }

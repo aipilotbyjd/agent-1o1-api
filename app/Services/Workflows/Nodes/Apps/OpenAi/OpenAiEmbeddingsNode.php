@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class OpenAiEmbeddingsNode extends AppNode
 {
@@ -64,7 +65,7 @@ class OpenAiEmbeddingsNode extends AppNode
         $ok = $response->successful();
         $this->recordMetric($run, $ok, $startedAt);
         if (! $ok) {
-            throw new \RuntimeException('OpenAI embeddings failed: '.$response->body());
+            throw new RuntimeException('OpenAI embeddings failed: '.$response->body());
         }
         $data = $response->json();
 

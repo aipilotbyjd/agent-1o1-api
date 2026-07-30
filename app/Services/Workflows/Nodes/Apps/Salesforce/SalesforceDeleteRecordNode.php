@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Salesforce;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class SalesforceDeleteRecordNode extends AppNode
+class SalesforceDeleteRecordNode extends HttpAppNode
 {
     public function type(): string
     {
@@ -55,15 +56,10 @@ class SalesforceDeleteRecordNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
         $instanceUrl = $credential->data['instance_url'] ?? '';
-        $response = Http::timeout(15)->withToken($credential->data['token'] ?? '')->get("{$instanceUrl}/services/data/v59.0/query", ['q' => $config['soql']]);
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-        if (! $ok) {
-            throw new \RuntimeException('Salesforce query failed: '.$response->body());
-        }
 
-        return $response->json() ?? [];
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http->get("{$instanceUrl}/services/data/v59.0/query", ['q' => $config['soql']]));
+
+        return $data;
     }
 }

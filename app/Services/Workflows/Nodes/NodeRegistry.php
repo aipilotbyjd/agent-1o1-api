@@ -31,20 +31,6 @@ class NodeRegistry
     }
 
     /**
-     * @throws UnknownNodeException
-     */
-    public function executable(string $type): ExecutableNode
-    {
-        $definition = $this->get($type);
-
-        if (! $definition instanceof ExecutableNode) {
-            throw new UnknownNodeException($type, "Node [{$type}] is not executable.");
-        }
-
-        return $definition;
-    }
-
-    /**
      * @return array<string, NodeDefinition>
      */
     public function all(): array

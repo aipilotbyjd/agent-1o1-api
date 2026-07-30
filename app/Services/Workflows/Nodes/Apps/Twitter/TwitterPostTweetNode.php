@@ -6,6 +6,8 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class TwitterPostTweetNode extends AppNode
 {
@@ -61,12 +63,12 @@ class TwitterPostTweetNode extends AppNode
         try {
             $response = Http::acceptJson()->asJson()->withToken($credential->data['token'] ?? '')->baseUrl('https://api.twitter.com/2')->post('/tweets', ['text' => $config['text'] ?? '']);
             if (! $response->successful()) {
-                throw new \RuntimeException('Twitter post_tweet failed: '.$response->body());
+                throw new RuntimeException('Twitter post_tweet failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

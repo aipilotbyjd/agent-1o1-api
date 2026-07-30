@@ -7,6 +7,7 @@ enum RunStepStatus: string
     case Pending = 'pending';
     case Running = 'running';
     case AwaitingApproval = 'awaiting_approval';
+    case AwaitingCallback = 'awaiting_callback';
     case Completed = 'completed';
     case Failed = 'failed';
     case Skipped = 'skipped';

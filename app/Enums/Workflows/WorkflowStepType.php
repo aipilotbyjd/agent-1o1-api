@@ -13,5 +13,6 @@ enum WorkflowStepType: string
     case Merge = 'merge';
     case SubWorkflow = 'sub_workflow';
     case Loop = 'loop';
+    case Wait = 'wait';
     case Flow = 'flow';
 }

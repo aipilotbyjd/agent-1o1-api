@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class LinearListIssuesNode extends AppNode
 {
@@ -90,7 +91,7 @@ class LinearListIssuesNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Linear list_issues error: '.json_encode($data['errors'] ?? $response->body()));
+            throw new RuntimeException('Linear list_issues error: '.json_encode($data['errors'] ?? $response->body()));
         }
 
         return $data['data'] ?? [];

@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Notion;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class NotionCreatePageNode extends AppNode
+class NotionCreatePageNode extends HttpAppNode
 {
     private const BASE_URL = 'https://api.notion.com/v1';
 
@@ -68,24 +69,15 @@ class NotionCreatePageNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $response = Http::timeout(15)
-            ->withToken($credential->data['token'] ?? '')
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->withHeaders(['Notion-Version' => '2022-06-28'])
             ->post(self::BASE_URL.'/pages', [
                 'parent' => isset($config['database_id']) ? ['database_id' => $config['database_id']] : [],
                 'properties' => $config['properties'],
                 'children' => $config['children'] ?? [],
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Notion create_page failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

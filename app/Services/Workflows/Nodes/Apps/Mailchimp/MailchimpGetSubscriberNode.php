@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class MailchimpGetSubscriberNode extends AppNode
 {
@@ -67,12 +69,12 @@ class MailchimpGetSubscriberNode extends AppNode
         try {
             $response = $this->mcHttp($credential)->get("/lists/{$config['list_id']}/members/{$hash}");
             if (! $response->successful()) {
-                throw new \RuntimeException('Mailchimp get_subscriber failed: '.$response->body());
+                throw new RuntimeException('Mailchimp get_subscriber failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

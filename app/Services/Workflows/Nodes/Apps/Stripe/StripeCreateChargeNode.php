@@ -4,10 +4,10 @@ namespace App\Services\Workflows\Nodes\Apps\Stripe;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class StripeCreateChargeNode extends AppNode
+class StripeCreateChargeNode extends StripeNode
 {
     private const BASE_URL = 'https://api.stripe.com/v1';
 
@@ -72,28 +72,16 @@ class StripeCreateChargeNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $apiKey = $credential->data['secret_key'] ?? $credential->data['api_key'] ?? '';
-
-        $response = Http::timeout(15)
-            ->withBasicAuth($apiKey, '')
-            ->asForm()
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->post(self::BASE_URL.'/payment_intents', [
                 'amount' => $config['amount'],
                 'currency' => $config['currency'] ?? 'usd',
                 'customer' => $config['customer_id'] ?? null,
                 'payment_method' => $config['payment_method'] ?? null,
                 'confirm' => $config['confirm'] ?? false,
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Stripe create_charge failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

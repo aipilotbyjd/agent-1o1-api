@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Google;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class GmailGetMessageNode extends AppNode
+class GmailGetMessageNode extends HttpAppNode
 {
     private const BASE_URL = 'https://gmail.googleapis.com/gmail/v1';
 
@@ -66,19 +67,10 @@ class GmailGetMessageNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $response = Http::timeout(15)
-            ->withToken($credential->data['token'] ?? '')
-            ->get(self::BASE_URL."/users/me/messages/{$config['message_id']}");
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
+            ->get(self::BASE_URL."/users/me/messages/{$config['message_id']}"));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Gmail get_message failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

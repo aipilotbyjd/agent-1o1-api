@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Google;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class GoogleSheetsUpdateRowNode extends AppNode
+class GoogleSheetsUpdateRowNode extends HttpAppNode
 {
     private const BASE_URL = 'https://sheets.googleapis.com/v4';
 
@@ -68,23 +69,14 @@ class GoogleSheetsUpdateRowNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
         $values = $config['values'];
 
-        $response = Http::timeout(15)
-            ->withToken($credential->data['token'] ?? '')
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->put(self::BASE_URL."/spreadsheets/{$config['spreadsheet_id']}/values/{$config['range']}?valueInputOption=USER_ENTERED", [
                 'values' => is_array($values[0] ?? null) ? $values : [$values],
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('GoogleSheets update_row failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

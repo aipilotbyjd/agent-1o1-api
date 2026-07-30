@@ -31,11 +31,7 @@ class AgentStepHandler implements StepHandler
 
         $prompt = $this->templates->resolve($config['prompt'] ?? '{{ input.message }}', $context);
 
-        $response = (new WorkspaceAgent($agent, $run))->prompt(
-            $prompt,
-            provider: $agent->provider,
-            model: $agent->model,
-        );
+        $response = (new WorkspaceAgent($agent, $run))->ask($prompt);
 
         return [
             'output' => ['text' => $response->text, 'agent_version' => $agent->currentVersionNumber()],

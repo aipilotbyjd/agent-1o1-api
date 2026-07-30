@@ -16,7 +16,7 @@ class NodeCatalogSync
      * other data — but the registry is the source of truth, so builtin rows are
      * upserted from it here. Workspace-authored custom nodes are left untouched.
      *
-     * @return array{categories: int, nodes: int}
+     * @return array{categories: int, nodes: int, retired: int}
      */
     public function sync(): array
     {
@@ -46,7 +46,27 @@ class NodeCatalogSync
             );
         }
 
-        return ['categories' => count($categories), 'nodes' => count($this->registry->all())];
+        return [
+            'categories' => count($categories),
+            'nodes' => count($this->registry->all()),
+            'retired' => $this->retireRemovedNodes(),
+        ];
+    }
+
+    /**
+     * Deactivate builtin rows whose definition has since been deleted from the registry.
+     *
+     * Upserting alone would leave a removed node sitting in the palette as an active row
+     * forever, offering authors a node the engine can no longer run. The rows are kept
+     * rather than deleted so existing graphs that reference the type still resolve.
+     */
+    private function retireRemovedNodes(): int
+    {
+        return Node::query()
+            ->where('is_custom', false)
+            ->where('is_active', true)
+            ->whereNotIn('type', array_keys($this->registry->all()))
+            ->update(['is_active' => false]);
     }
 
     /**

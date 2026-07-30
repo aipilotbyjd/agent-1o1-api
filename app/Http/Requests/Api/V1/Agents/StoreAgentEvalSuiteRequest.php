@@ -26,7 +26,7 @@ class StoreAgentEvalSuiteRequest extends FormRequest
             'cases.*.name' => ['required_with:cases', 'string', 'max:255'],
             'cases.*.input' => ['required_with:cases', 'string'],
             'cases.*.assertions' => ['required_with:cases', 'array', 'min:1'],
-            'cases.*.assertions.*.type' => ['required', 'string', Rule::in(AgentEvalService::ASSERTION_TYPES)],
+            'cases.*.assertions.*.type' => ['required', 'string', Rule::in(AgentEvalService::assertionTypes())],
             'cases.*.assertions.*.value' => ['required', 'string'],
         ];
     }

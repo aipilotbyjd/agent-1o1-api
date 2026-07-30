@@ -4,10 +4,10 @@ namespace App\Services\Workflows\Nodes\Apps\Twilio;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class TwilioSendVerificationNode extends AppNode
+class TwilioSendVerificationNode extends TwilioNode
 {
     public function type(): string
     {
@@ -61,27 +61,16 @@ class TwilioSendVerificationNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
         $sid = $credential->data['account_sid'] ?? '';
-        $authToken = $credential->data['auth_token'] ?? $credential->data['password'] ?? '';
         $serviceSid = $config['service_sid'] ?? $credential->data['verify_service_sid'] ?? '';
 
-        $response = Http::timeout(15)
-            ->withBasicAuth($sid, $authToken)
-            ->asForm()
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->post("https://verify.twilio.com/v2/Services/{$serviceSid}/Verifications", [
                 'To' => $config['to'],
                 'Channel' => $config['channel'] ?? 'sms',
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Twilio send_verification failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

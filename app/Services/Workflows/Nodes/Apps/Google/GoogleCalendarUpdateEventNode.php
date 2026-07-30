@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Google;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class GoogleCalendarUpdateEventNode extends AppNode
+class GoogleCalendarUpdateEventNode extends HttpAppNode
 {
     private const BASE_URL = 'https://www.googleapis.com/calendar/v3';
 
@@ -72,7 +73,6 @@ class GoogleCalendarUpdateEventNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
         $calendarId = $config['calendar_id'] ?? 'primary';
         $timezone = $config['timezone'] ?? 'UTC';
@@ -89,17 +89,9 @@ class GoogleCalendarUpdateEventNode extends AppNode
             $body['end'] = ['dateTime' => $config['end'], 'timeZone' => $timezone];
         }
 
-        $response = Http::timeout(15)
-            ->withToken($credential->data['token'] ?? '')
-            ->patch(self::BASE_URL."/calendars/{$calendarId}/events/{$config['event_id']}", $body);
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
+            ->patch(self::BASE_URL."/calendars/{$calendarId}/events/{$config['event_id']}", $body));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('GoogleCalendar update_event failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

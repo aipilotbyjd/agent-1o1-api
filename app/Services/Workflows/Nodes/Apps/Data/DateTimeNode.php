@@ -7,6 +7,7 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
 use Carbon\Carbon;
+use RuntimeException;
 
 class DateTimeNode extends NodeDefinition implements ExecutableNode
 {
@@ -85,7 +86,7 @@ class DateTimeNode extends NodeDefinition implements ExecutableNode
             'start_of' => ['result' => $date->startOf($config['unit'] ?? 'day')->toISOString()],
             'end_of' => ['result' => $date->endOf($config['unit'] ?? 'day')->toISOString()],
             'timestamp' => ['result' => $date->timestamp],
-            default => throw new \RuntimeException("DateTime: unknown operation '{$operation}'"),
+            default => throw new RuntimeException("DateTime: unknown operation '{$operation}'"),
         };
     }
 

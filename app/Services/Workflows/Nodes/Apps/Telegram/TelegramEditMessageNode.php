@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class TelegramEditMessageNode extends AppNode
 {
@@ -84,7 +85,7 @@ class TelegramEditMessageNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Telegram edit_message error: '.($body['description'] ?? $response->body()));
+            throw new RuntimeException('Telegram edit_message error: '.($body['description'] ?? $response->body()));
         }
 
         return ['edited' => true];

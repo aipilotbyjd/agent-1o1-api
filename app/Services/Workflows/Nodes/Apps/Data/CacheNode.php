@@ -7,6 +7,7 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
 use Illuminate\Support\Facades\Cache as CacheFacade;
+use RuntimeException;
 
 class CacheNode extends NodeDefinition implements ExecutableNode
 {
@@ -76,7 +77,7 @@ class CacheNode extends NodeDefinition implements ExecutableNode
             'forget' => ['forgotten' => CacheFacade::forget($key)],
             'has' => ['exists' => CacheFacade::has($key)],
             'increment' => ['value' => CacheFacade::increment($key, (int) ($config['by'] ?? 1))],
-            default => throw new \RuntimeException("Cache: unknown operation '{$operation}'"),
+            default => throw new RuntimeException("Cache: unknown operation '{$operation}'"),
         };
     }
 

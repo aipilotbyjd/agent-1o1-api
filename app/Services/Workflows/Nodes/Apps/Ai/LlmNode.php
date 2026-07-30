@@ -7,6 +7,7 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class LlmNode extends NodeDefinition implements ExecutableNode
 {
@@ -109,7 +110,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
             'deepseek' => $this->openaiCompatible($run, $config, $systemOverride, 'DeepSeek', 'https://api.deepseek.com/v1', 'deepseek-chat'),
             'xai' => $this->openaiCompatible($run, $config, $systemOverride, 'xAI', 'https://api.x.ai/v1', 'grok-3-mini'),
             'openrouter' => $this->openaiCompatible($run, $config, $systemOverride, 'OpenRouter', 'https://openrouter.ai/api/v1', 'openai/gpt-4o-mini'),
-            default => throw new \RuntimeException("LLM: unknown provider '{$provider}'"),
+            default => throw new RuntimeException("LLM: unknown provider '{$provider}'"),
         };
     }
 
@@ -126,7 +127,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
             ]));
 
         if (! $response->successful()) {
-            throw new \RuntimeException('Anthropic API error: '.$response->body());
+            throw new RuntimeException('Anthropic API error: '.$response->body());
         }
         $data = $response->json();
 
@@ -143,7 +144,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
         $messages[] = ['role' => 'user', 'content' => $config['prompt'] ?? ''];
         $response = Http::acceptJson()->asJson()->withToken($apiKey)->post('https://api.openai.com/v1/chat/completions', ['model' => $config['model'] ?? 'gpt-4o-mini', 'messages' => $messages]);
         if (! $response->successful()) {
-            throw new \RuntimeException('OpenAI API error: '.$response->body());
+            throw new RuntimeException('OpenAI API error: '.$response->body());
         }
         $data = $response->json();
 
@@ -164,7 +165,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/'.$model.':generateContent?key='.$apiKey;
         $response = Http::acceptJson()->asJson()->post($url, $body);
         if (! $response->successful()) {
-            throw new \RuntimeException('Gemini API error: '.$response->body());
+            throw new RuntimeException('Gemini API error: '.$response->body());
         }
         $data = $response->json();
 
@@ -184,7 +185,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
         $messages[] = ['role' => 'user', 'content' => $config['prompt'] ?? ''];
         $response = Http::acceptJson()->asJson()->withHeaders(['api-key' => $apiKey])->post("{$endpoint}/openai/deployments/{$deployment}/chat/completions?api-version={$apiVersion}", ['messages' => $messages]);
         if (! $response->successful()) {
-            throw new \RuntimeException('Azure OpenAI API error: '.$response->body());
+            throw new RuntimeException('Azure OpenAI API error: '.$response->body());
         }
         $data = $response->json();
 
@@ -201,7 +202,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
         $messages[] = ['role' => 'user', 'content' => $config['prompt'] ?? ''];
         $response = Http::acceptJson()->asJson()->withToken($apiKey)->post('https://api.cohere.com/v2/chat', ['model' => $config['model'] ?? 'command-r-plus', 'messages' => $messages]);
         if (! $response->successful()) {
-            throw new \RuntimeException('Cohere API error: '.$response->body());
+            throw new RuntimeException('Cohere API error: '.$response->body());
         }
         $data = $response->json();
 
@@ -218,7 +219,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
         $messages[] = ['role' => 'user', 'content' => $config['prompt'] ?? ''];
         $response = Http::acceptJson()->asJson()->post("{$baseUrl}/chat/completions", ['model' => $config['model'] ?? 'llama3.2', 'messages' => $messages]);
         if (! $response->successful()) {
-            throw new \RuntimeException('Ollama API error: '.$response->body());
+            throw new RuntimeException('Ollama API error: '.$response->body());
         }
         $data = $response->json();
 
@@ -235,7 +236,7 @@ class LlmNode extends NodeDefinition implements ExecutableNode
         $messages[] = ['role' => 'user', 'content' => $config['prompt'] ?? ''];
         $response = Http::acceptJson()->asJson()->withToken($apiKey)->post("{$baseUrl}/chat/completions", ['model' => $config['model'] ?? $defaultModel, 'messages' => $messages]);
         if (! $response->successful()) {
-            throw new \RuntimeException("{$name} API error: ".$response->body());
+            throw new RuntimeException("{$name} API error: ".$response->body());
         }
         $data = $response->json();
 

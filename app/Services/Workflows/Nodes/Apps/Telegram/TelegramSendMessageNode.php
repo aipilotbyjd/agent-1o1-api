@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class TelegramSendMessageNode extends AppNode
 {
@@ -87,7 +88,7 @@ class TelegramSendMessageNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Telegram send_message error: '.($body['description'] ?? $response->body()));
+            throw new RuntimeException('Telegram send_message error: '.($body['description'] ?? $response->body()));
         }
 
         return ['message_id' => $body['result']['message_id'] ?? null, 'sent' => true];

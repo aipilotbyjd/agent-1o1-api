@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class TwilioCheckVerificationNode extends AppNode
 {
@@ -86,7 +87,7 @@ class TwilioCheckVerificationNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Twilio check_verification failed: '.$response->body());
+            throw new RuntimeException('Twilio check_verification failed: '.$response->body());
         }
 
         return ['valid' => ($data['status'] ?? '') === 'approved', 'status' => $data['status'] ?? ''];

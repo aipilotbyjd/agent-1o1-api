@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\V1\Billing\PlanController;
+use App\Http\Controllers\Api\V1\Runs\RunCallbackController;
 use App\Http\Controllers\Api\V1\Triggers\WebhookController;
 use App\Http\Controllers\Api\V1\Workflows\ShowSharedWorkflowController;
 use App\Http\Controllers\Api\V1\Workspaces\AcceptInvitationController;
@@ -29,6 +30,11 @@ Route::prefix('v1')->as('v1.')->group(function (): void {
     Route::post('hooks/{token}', WebhookController::class)
         ->middleware('throttle:trigger-hooks')
         ->name('hooks.trigger');
+
+    // Public — authenticated by the wait step's single-use callback token.
+    Route::post('run-callbacks/{token}', RunCallbackController::class)
+        ->middleware('throttle:trigger-hooks')
+        ->name('run-callbacks.resume');
 
     // Public — anonymous visitors following a workflow share link.
     Route::get('shared-workflows/{token}', ShowSharedWorkflowController::class)->name('shared-workflows.show');

@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class SlackCreateChannelNode extends AppNode
 {
@@ -89,7 +90,7 @@ class SlackCreateChannelNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Slack create_channel error: '.($body['error'] ?? 'unknown'));
+            throw new RuntimeException('Slack create_channel error: '.($body['error'] ?? 'unknown'));
         }
 
         return $body['channel'] ?? [];

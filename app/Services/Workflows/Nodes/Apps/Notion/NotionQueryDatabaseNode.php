@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Notion;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class NotionQueryDatabaseNode extends AppNode
+class NotionQueryDatabaseNode extends HttpAppNode
 {
     private const BASE_URL = 'https://api.notion.com/v1';
 
@@ -74,24 +75,15 @@ class NotionQueryDatabaseNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $response = Http::timeout(15)
-            ->withToken($credential->data['token'] ?? '')
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->withHeaders(['Notion-Version' => '2022-06-28'])
             ->post(self::BASE_URL."/databases/{$config['database_id']}/query", array_filter([
                 'filter' => $config['filter'] ?? null,
                 'sorts' => $config['sorts'] ?? null,
                 'page_size' => $config['page_size'] ?? 100,
-            ]));
+            ])));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Notion query_database failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

@@ -6,6 +6,7 @@ use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
+use RuntimeException;
 
 class MathNode extends NodeDefinition implements ExecutableNode
 {
@@ -75,7 +76,7 @@ class MathNode extends NodeDefinition implements ExecutableNode
             'add' => ['result' => $a + $b],
             'subtract' => ['result' => $a - $b],
             'multiply' => ['result' => $a * $b],
-            'divide' => $b == 0.0 ? throw new \RuntimeException('Math: division by zero') : ['result' => $a / $b],
+            'divide' => $b == 0.0 ? throw new RuntimeException('Math: division by zero') : ['result' => $a / $b],
             'modulo' => ['result' => fmod($a, $b)],
             'power' => ['result' => $a ** $b],
             'sqrt' => ['result' => sqrt($a)],
@@ -88,7 +89,7 @@ class MathNode extends NodeDefinition implements ExecutableNode
             'min' => ['result' => count($values) > 0 ? min($values) : null],
             'max' => ['result' => count($values) > 0 ? max($values) : null],
             'random' => ['result' => random_int((int) $a, (int) max($a, $b))],
-            default => throw new \RuntimeException("Math: unknown operation '{$operation}'"),
+            default => throw new RuntimeException("Math: unknown operation '{$operation}'"),
         };
     }
 }

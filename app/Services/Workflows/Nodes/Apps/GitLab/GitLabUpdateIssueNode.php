@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class GitLabUpdateIssueNode extends AppNode
 {
@@ -87,7 +88,7 @@ class GitLabUpdateIssueNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('GitLab update_issue failed: '.$response->body());
+            throw new RuntimeException('GitLab update_issue failed: '.$response->body());
         }
 
         return $response->json() ?? [];

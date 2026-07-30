@@ -6,6 +6,8 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class MongodbDeleteOneNode extends AppNode
 {
@@ -62,12 +64,12 @@ class MongodbDeleteOneNode extends AppNode
             $payload = array_filter(['dataSource' => $credential->data['data_source'] ?? 'Cluster0', 'database' => $credential->data['database'], 'collection' => $config['collection'], 'filter' => $config['filter']]);
             $response = Http::withHeaders(['api-key' => $credential->data['api_key'] ?? ''])->post(rtrim($credential->data['data_api_url'] ?? '', '/').'/action/deleteOne', $payload);
             if (! $response->successful()) {
-                throw new \RuntimeException('MongoDB delete_one failed: '.$response->body());
+                throw new RuntimeException('MongoDB delete_one failed: '.$response->body());
             }
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

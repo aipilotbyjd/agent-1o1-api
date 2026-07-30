@@ -4,10 +4,10 @@ namespace App\Services\Workflows\Nodes\Apps\Jira;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class JiraCreateIssueNode extends AppNode
+class JiraCreateIssueNode extends JiraNode
 {
     public function type(): string
     {
@@ -69,13 +69,9 @@ class JiraCreateIssueNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $domain = $credential->data['domain'] ?? $config['domain'] ?? '';
-
-        $response = Http::timeout(15)
-            ->withBasicAuth($credential->data['email'] ?? '', $credential->data['api_token'] ?? $credential->data['password'] ?? '')
-            ->post("https://{$domain}/rest/api/3/issue", [
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
+            ->post($this->baseUrl($credential, $config).'/issue', [
                 'fields' => [
                     'project' => ['key' => $config['project_key']],
                     'summary' => $config['summary'],
@@ -89,15 +85,8 @@ class JiraCreateIssueNode extends AppNode
                         ]],
                     ] : null,
                 ],
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Jira create_issue failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

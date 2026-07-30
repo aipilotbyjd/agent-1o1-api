@@ -8,7 +8,7 @@ class MergeStepHandler implements StepHandler
 {
     /**
      * Join point for parallel branches. The engine only invokes this handler once every
-     * incoming branch has completed (see WorkflowRunner::allPredecessorsComplete), so this
+     * incoming branch has completed (see GraphAdvancer::allComplete), so this
      * just collects each branch's output keyed by its step key.
      *
      * @param  array<string, mixed>  $step

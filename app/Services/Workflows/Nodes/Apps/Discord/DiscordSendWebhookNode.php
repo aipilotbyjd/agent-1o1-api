@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class DiscordSendWebhookNode extends AppNode
 {
@@ -81,7 +82,7 @@ class DiscordSendWebhookNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('Discord webhook failed: '.$response->body());
+            throw new RuntimeException('Discord webhook failed: '.$response->body());
         }
 
         return ['sent' => true];

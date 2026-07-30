@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class GoogleDriveUploadFileNode extends AppNode
 {
@@ -91,7 +92,7 @@ class GoogleDriveUploadFileNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('GoogleDrive upload_file failed: '.$response->body());
+            throw new RuntimeException('GoogleDrive upload_file failed: '.$response->body());
         }
 
         return $response->json() ?? [];

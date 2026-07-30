@@ -7,6 +7,8 @@ use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
+use Throwable;
 
 class MailchimpUpdateSubscriberNode extends AppNode
 {
@@ -78,13 +80,13 @@ class MailchimpUpdateSubscriberNode extends AppNode
                 ]));
 
             if (! $response->successful()) {
-                throw new \RuntimeException('Mailchimp update_subscriber failed: '.$response->body());
+                throw new RuntimeException('Mailchimp update_subscriber failed: '.$response->body());
             }
 
             $this->recordMetric($run, true, $startedAt);
 
             return $response->json();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             $this->recordMetric($run, false, $startedAt);
             throw $e;
         }

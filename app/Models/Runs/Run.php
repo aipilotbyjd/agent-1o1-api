@@ -3,6 +3,7 @@
 namespace App\Models\Runs;
 
 use App\Enums\Runs\RunStatus;
+use App\Enums\Runs\RunStepStatus;
 use App\Events\RunUpdated;
 use App\Models\User;
 use App\Models\Workflows\WorkflowVersion;
@@ -151,10 +152,20 @@ class Run extends Model
         $this->transitionTo(RunStatus::AwaitingApproval);
     }
 
+    public function markAwaitingCallback(): void
+    {
+        $this->transitionTo(RunStatus::AwaitingCallback);
+    }
+
     public function cancel(): void
     {
         $this->steps()
-            ->whereIn('status', [RunStatus::Pending->value, RunStatus::Running->value, RunStatus::AwaitingApproval->value])
+            ->whereIn('status', [
+                RunStepStatus::Pending->value,
+                RunStepStatus::Running->value,
+                RunStepStatus::AwaitingApproval->value,
+                RunStepStatus::AwaitingCallback->value,
+            ])
             ->get()
             ->each(fn (RunStep $step) => $step->markCancelled());
 

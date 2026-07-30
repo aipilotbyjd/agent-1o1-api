@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\GitHub;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class GitHubListPullRequestsNode extends AppNode
+class GitHubListPullRequestsNode extends HttpAppNode
 {
     private const BASE_URL = 'https://api.github.com';
 
@@ -73,22 +74,13 @@ class GitHubListPullRequestsNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $response = Http::timeout(15)
-            ->withToken($credential->data['token'] ?? '')
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->get(self::BASE_URL."/repos/{$config['repo']}/pulls", [
                 'state' => $config['state'] ?? 'open',
                 'per_page' => $config['per_page'] ?? 30,
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('GitHub list_pull_requests failed: '.$response->body());
-        }
-
-        return ['pull_requests' => $response->json() ?? []];
+        return ['pull_requests' => $data];
     }
 }

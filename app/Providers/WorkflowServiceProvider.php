@@ -194,13 +194,11 @@ use App\Services\Workflows\Nodes\Core\SetVariableNode;
 use App\Services\Workflows\Nodes\Core\SubWorkflowNode;
 use App\Services\Workflows\Nodes\Core\TransformNode;
 use App\Services\Workflows\Nodes\Core\TriggerNode;
+use App\Services\Workflows\Nodes\Core\WaitNode;
 use App\Services\Workflows\Nodes\Flow\ConditionNode;
 use App\Services\Workflows\Nodes\Flow\DelayNode;
 use App\Services\Workflows\Nodes\Flow\LoopNode;
 use App\Services\Workflows\Nodes\Flow\MergeNode;
-use App\Services\Workflows\Nodes\Flow\RetryNode;
-use App\Services\Workflows\Nodes\Flow\TryCatchNode;
-use App\Services\Workflows\Nodes\Flow\WaitNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
 use App\Services\Workflows\Nodes\NodeRegistry;
 use Illuminate\Support\ServiceProvider;
@@ -224,8 +222,6 @@ class WorkflowServiceProvider extends ServiceProvider
         LoopNode::class,
         HumanApprovalNode::class,
         SubWorkflowNode::class,
-        RetryNode::class,
-        TryCatchNode::class,
         WaitNode::class,
         TriggerNode::class,
         SetVariableNode::class,

@@ -4,10 +4,11 @@ namespace App\Services\Workflows\Nodes\Apps\Discord;
 
 use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
-use App\Services\Workflows\Nodes\Apps\AppNode;
-use Illuminate\Support\Facades\Http;
+use App\Services\Workflows\Nodes\Apps\HttpAppNode;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 
-class DiscordCreateChannelNode extends AppNode
+class DiscordCreateChannelNode extends HttpAppNode
 {
     private const BASE_URL = 'https://discord.com/api/v10';
 
@@ -69,22 +70,13 @@ class DiscordCreateChannelNode extends AppNode
     public function execute(Run $run, array $config, array $context): array
     {
         $credential = $this->requireCredential($run, $config);
-        $startedAt = microtime(true);
 
-        $response = Http::timeout(15)
-            ->withToken($credential->data['token'] ?? '')
+        $data = $this->send($run, $credential, fn (PendingRequest $http): Response => $http
             ->post(self::BASE_URL."/guilds/{$config['guild_id']}/channels", [
                 'name' => $config['name'],
                 'type' => $config['type'] ?? 0,
-            ]);
+            ]));
 
-        $ok = $response->successful();
-        $this->recordMetric($run, $ok, $startedAt);
-
-        if (! $ok) {
-            throw new \RuntimeException('Discord create_channel failed: '.$response->body());
-        }
-
-        return $response->json() ?? [];
+        return $data;
     }
 }

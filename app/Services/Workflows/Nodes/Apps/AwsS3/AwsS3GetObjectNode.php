@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 class AwsS3GetObjectNode extends AppNode
 {
@@ -58,7 +59,7 @@ class AwsS3GetObjectNode extends AppNode
         $startedAt = microtime(true);
         $disk = Storage::build(['driver' => 's3', 'key' => $credential->data['access_key_id'] ?? '', 'secret' => $credential->data['secret_access_key'] ?? '', 'region' => $credential->data['region'] ?? 'us-east-1', 'bucket' => $config['bucket'] ?? ($credential->data['bucket'] ?? '')]);
         if (! $disk->exists($config['key'])) {
-            throw new \RuntimeException('S3 object not found: '.$config['key']);
+            throw new RuntimeException('S3 object not found: '.$config['key']);
         }
         $result = ['content' => $disk->get($config['key']), 'key' => $config['key']];
         $this->recordMetric($run, true, $startedAt);

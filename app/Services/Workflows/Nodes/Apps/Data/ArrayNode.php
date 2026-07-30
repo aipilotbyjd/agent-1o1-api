@@ -6,6 +6,7 @@ use App\Enums\Workflows\WorkflowStepType;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\ExecutableNode;
 use App\Services\Workflows\Nodes\NodeDefinition;
+use RuntimeException;
 
 class ArrayNode extends NodeDefinition implements ExecutableNode
 {
@@ -88,7 +89,7 @@ class ArrayNode extends NodeDefinition implements ExecutableNode
             'first' => ['result' => array_values($items)[0] ?? null],
             'last' => ['result' => array_values($items)[count($items) - 1] ?? null],
             'join' => ['result' => implode($config['separator'] ?? ',', $items)],
-            default => throw new \RuntimeException("Array: unknown operation '{$operation}'"),
+            default => throw new RuntimeException("Array: unknown operation '{$operation}'"),
         };
     }
 

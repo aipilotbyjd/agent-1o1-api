@@ -6,6 +6,7 @@ use App\Models\Credentials\Credential;
 use App\Models\Runs\Run;
 use App\Services\Workflows\Nodes\Apps\AppNode;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 
 class GoogleDriveDownloadFileNode extends AppNode
 {
@@ -82,7 +83,7 @@ class GoogleDriveDownloadFileNode extends AppNode
         $this->recordMetric($run, $ok, $startedAt);
 
         if (! $ok) {
-            throw new \RuntimeException('GoogleDrive download_file failed: '.$response->body());
+            throw new RuntimeException('GoogleDrive download_file failed: '.$response->body());
         }
 
         return ['content' => $response->body(), 'file_id' => $config['file_id']];

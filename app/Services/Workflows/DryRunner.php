@@ -40,7 +40,7 @@ class DryRunner
         $warnings = [];
         $trace = [];
 
-        foreach ($this->executionOrder($graph) as $step) {
+        foreach (WorkflowGraph::fromArray($graph)->topologicalOrder() as $step) {
             $definition = $this->resolver->definitionFor($step);
             $config = $step['config'] ?? [];
 
@@ -67,49 +67,6 @@ class DryRunner
             'warnings' => $warnings,
             'steps' => $trace,
         ];
-    }
-
-    /**
-     * Steps in the order the engine would reach them — a topological sort, which the
-     * validator has already guaranteed is possible by ruling out cycles.
-     *
-     * @param  array{steps?: array<int, array<string, mixed>>, edges?: array<int, array<string, mixed>>}  $graph
-     * @return array<int, array<string, mixed>>
-     */
-    private function executionOrder(array $graph): array
-    {
-        $steps = collect($graph['steps'] ?? [])->keyBy('key');
-        $incoming = [];
-
-        foreach ($steps as $key => $step) {
-            $incoming[$key] = 0;
-        }
-
-        foreach ($graph['edges'] ?? [] as $edge) {
-            $incoming[$edge['to']] = ($incoming[$edge['to']] ?? 0) + 1;
-        }
-
-        $queue = array_keys(array_filter($incoming, fn (int $count): bool => $count === 0));
-        $ordered = [];
-
-        while ($queue !== []) {
-            $key = array_shift($queue);
-            $ordered[] = $steps[$key];
-
-            foreach ($graph['edges'] ?? [] as $edge) {
-                if ($edge['from'] !== $key) {
-                    continue;
-                }
-
-                $incoming[$edge['to']]--;
-
-                if ($incoming[$edge['to']] === 0) {
-                    $queue[] = $edge['to'];
-                }
-            }
-        }
-
-        return $ordered;
     }
 
     /**
@@ -151,16 +108,8 @@ class DryRunner
      */
     private function unresolvedPaths(array $config, array $context): array
     {
-        $encoded = json_encode($config);
-
-        if ($encoded === false) {
-            return [];
-        }
-
-        preg_match_all('/\{\{\s*([\w.\-]+)/', $encoded, $matches);
-
         $unresolved = array_filter(
-            array_unique($matches[1] ?? []),
+            TemplatePaths::referencedIn($config),
             function (string $path) use ($context): bool {
                 // `variables.*` and loop-local `item`/`index` only exist at run time.
                 if (str_starts_with($path, 'variables.') || str_starts_with($path, 'item') || $path === 'index') {
