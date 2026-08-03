@@ -1,0 +1,44 @@
+meta {
+  name: Create Folder
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/folders
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Marketing Campaigns",
+    "color": "#4f46e5",
+    "position": 1
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("folderId", res.body.data.id);
+  }
+}
+
+docs {
+  Creates a new folder in the workspace for organizing workflows. `name` is required;
+  `color` (hex), `parent_id` (for nesting), and `position` are optional. Requires
+  the `workflow.manage` permission.
+
+  Expected result:
+  - 201 with the created folder.
+  - 422 on validation errors.
+  - 403 if the user lacks the `workflow.manage` permission.
+}

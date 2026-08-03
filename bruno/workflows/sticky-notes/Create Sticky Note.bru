@@ -1,0 +1,50 @@
+meta {
+  name: Create Sticky Note
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/sticky-notes
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "content": "Remember to update the API key before deploying.",
+    "color": "#fef08a",
+    "position_x": 100,
+    "position_y": 200,
+    "width": 250,
+    "height": 150,
+    "z_index": 1
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("stickyNoteId", res.body.data.id);
+  }
+}
+
+docs {
+  Creates a sticky note on the workflow canvas. `content`, `color`, `position_x`,
+  `position_y`, `width`, `height`, and `z_index` are all optional. Requires the
+  `workflow.manage` permission.
+
+  Expected result:
+  - 201 with the created sticky note.
+  - 422 on validation errors.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

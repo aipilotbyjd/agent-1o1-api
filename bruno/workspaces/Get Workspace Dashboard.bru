@@ -1,0 +1,29 @@
+meta {
+  name: Get Workspace Dashboard
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/dashboard
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Returns the workspace's dashboard data — a summary of recent activity, run stats,
+  agent performance, and other key metrics at a glance. Requires the `workspace.view`
+  permission.
+
+  Expected result:
+  - 200 with dashboard data.
+  - 403 if the user lacks the `workspace.view` permission.
+}

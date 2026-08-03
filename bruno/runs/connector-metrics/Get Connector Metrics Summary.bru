@@ -1,0 +1,29 @@
+meta {
+  name: Get Connector Metrics Summary
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/connector-metrics/summary
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Aggregates connector metrics across all dates, grouped by connector — returns
+  total, success, and failed call counts, failure rate, and average duration per
+  connector. Requires the `run.view` permission.
+
+  Expected result:
+  - 200 with a summary array, one entry per connector.
+  - 403 if the user lacks the `run.view` permission.
+}

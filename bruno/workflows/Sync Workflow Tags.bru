@@ -1,0 +1,38 @@
+meta {
+  name: Sync Workflow Tags
+  type: http
+  seq: 11
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/tags
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "tag_ids": [1, 2]
+  }
+}
+
+docs {
+  Replaces the workflow's tag assignments with the given tag IDs (sync, not merge —
+  any tag not in the array is detached). Pass an empty array to remove all tags.
+  All tag IDs must exist in the workspace. Requires the `workflow.manage` permission.
+
+  Expected result:
+  - 200 with the updated tag collection.
+  - 422 if any tag ID doesn't exist in this workspace.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the workflow doesn't belong to this workspace.
+}

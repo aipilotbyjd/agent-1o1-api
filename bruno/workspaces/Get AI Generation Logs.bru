@@ -1,0 +1,29 @@
+meta {
+  name: Get AI Generation Logs
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/ai-generation-logs
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the workspace's AI generation activity logs, most recent first. These track
+  uses of AI-powered features like workflow builder suggestions, fix diagnoses, and
+  agent chat completions. Requires the `workspace.view` permission.
+
+  Expected result:
+  - 200 with an array of AI generation logs.
+  - 403 if the user lacks the `workspace.view` permission.
+}

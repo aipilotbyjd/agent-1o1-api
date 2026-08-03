@@ -1,0 +1,47 @@
+meta {
+  name: Create Log Streaming Config
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/log-streaming-configs
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "destination": "webhook",
+    "endpoint": "https://logs.example.com/ingest",
+    "headers": {
+      "Authorization": "Bearer {{apiKey}}"
+    },
+    "is_active": true
+  }
+}
+
+script:post-response {
+  if (res.body?.data?.id) {
+    bru.setVar("logStreamingConfigId", res.body.data.id);
+  }
+}
+
+docs {
+  Creates a log streaming config that forwards workspace run logs to an external
+  destination. `destination` must be one of `webhook`, `datadog`, or `elasticsearch`;
+  `endpoint` is the target URL. Requires the `workspace.update` permission.
+
+  Expected result:
+  - 201 with the created config.
+  - 422 on validation errors.
+  - 403 if the user lacks the `workspace.update` permission.
+}

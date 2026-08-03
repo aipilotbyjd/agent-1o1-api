@@ -1,0 +1,30 @@
+meta {
+  name: Delete Folder
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/folders/:folder
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  folder: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a folder. Workflows inside the folder fall back to no folder (FK uses
+  nullOnDelete). Requires the `workflow.manage` permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the folder doesn't belong to this workspace.
+}

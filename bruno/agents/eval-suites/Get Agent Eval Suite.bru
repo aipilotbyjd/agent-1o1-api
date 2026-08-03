@@ -1,0 +1,31 @@
+meta {
+  name: Get Agent Eval Suite
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/eval-suites/:evalSuite
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  evalSuite: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Shows a single eval suite with its test cases and run history. Requires the
+  `agent-eval.view` permission.
+
+  Expected result:
+  - 200 with the eval suite.
+  - 403 if the user lacks the `agent-eval.view` permission.
+  - 404 if the eval suite doesn't belong to this agent.
+}

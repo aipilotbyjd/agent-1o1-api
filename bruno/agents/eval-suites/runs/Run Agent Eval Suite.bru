@@ -1,0 +1,33 @@
+meta {
+  name: Run Agent Eval Suite
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/eval-suites/:evalSuite/run
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  evalSuite: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Starts an evaluation run that executes every test case in the suite against the
+  agent and checks assertions. Results are available via "List Agent Eval Runs" once
+  processing completes. Requires the `agent-eval.manage` permission.
+
+  Expected result:
+  - 202 with the created eval run.
+  - 409 if a run is already in progress.
+  - 403 if the user lacks the `agent-eval.manage` permission.
+  - 404 if the eval suite doesn't belong to this agent.
+}

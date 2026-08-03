@@ -1,0 +1,31 @@
+meta {
+  name: Delete Sticky Note
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/sticky-notes/:stickyNote
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  stickyNote: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes a sticky note from the workflow canvas. Requires the `workflow.manage`
+  permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the sticky note doesn't belong to this workflow.
+}

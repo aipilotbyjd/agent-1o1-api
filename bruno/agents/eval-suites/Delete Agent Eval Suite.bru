@@ -1,0 +1,31 @@
+meta {
+  name: Delete Agent Eval Suite
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/eval-suites/:evalSuite
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  evalSuite: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Deletes an eval suite and all its cases and runs. Requires the `agent-eval.manage`
+  permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `agent-eval.manage` permission.
+  - 404 if the eval suite doesn't belong to this agent.
+}

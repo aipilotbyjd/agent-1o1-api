@@ -1,0 +1,28 @@
+meta {
+  name: List Tags
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/tags
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the workspace's tags, alphabetically sorted, each with its `workflows_count`.
+  Requires the `workflow.view` permission.
+
+  Expected result:
+  - 200 with an array of tags.
+  - 403 if the user lacks the `workflow.view` permission.
+}

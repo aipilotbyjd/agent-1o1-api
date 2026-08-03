@@ -1,0 +1,38 @@
+meta {
+  name: Diagnose Run Step
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/runs/:run/fix-suggestions/diagnose
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  run: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "step_key": "run_agent"
+  }
+}
+
+docs {
+  Queues an AI-powered diagnosis of a failed run step. The step key must correspond
+  to a failed step on the run. Results appear asynchronously — poll "List Run Fix
+  Suggestions" afterwards. Requires the `workflow.manage` permission.
+
+  Expected result:
+  - 202 with a confirmation message. Diagnosis is queued.
+  - 422 if the step doesn't exist or isn't failed.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the run doesn't belong to this workspace.
+}

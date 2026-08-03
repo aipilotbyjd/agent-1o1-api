@@ -1,0 +1,32 @@
+meta {
+  name: Delete Agent Eval Case
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/eval-suites/:evalSuite/cases/:case
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  evalSuite: 1
+  case: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Removes a single test case from the eval suite. Requires the `agent-eval.manage`
+  permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `agent-eval.manage` permission.
+  - 404 if the case doesn't belong to this eval suite.
+}

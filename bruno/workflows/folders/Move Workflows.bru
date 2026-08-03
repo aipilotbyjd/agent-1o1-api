@@ -1,0 +1,37 @@
+meta {
+  name: Move Workflows
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/folders/move-workflows
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "workflow_ids": [1, 2],
+    "folder_id": 1
+  }
+}
+
+docs {
+  Moves one or more workflows into a folder. Set `folder_id` to `null` to move
+  workflows out of any folder back to root level. Requires the `workflow.manage`
+  permission.
+
+  Expected result:
+  - 200 on success.
+  - 422 on validation errors (e.g. folder doesn't exist in this workspace).
+  - 403 if the user lacks the `workflow.manage` permission.
+}

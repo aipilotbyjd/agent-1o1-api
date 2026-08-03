@@ -1,0 +1,38 @@
+meta {
+  name: Update Tag
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/tags/:tag
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  tag: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "high-priority",
+    "color": "#f97316"
+  }
+}
+
+docs {
+  Updates a tag's name and/or color. `name` must remain unique within the workspace.
+  Requires the `workflow.manage` permission.
+
+  Expected result:
+  - 200 with the updated tag.
+  - 422 if the new name already exists.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the tag doesn't belong to this workspace.
+}

@@ -1,0 +1,33 @@
+meta {
+  name: Get Agent Analytics
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/analytics
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Returns aggregate usage analytics for the agent over a date range, including run
+  volume, success/failure rates, latency, token usage, per-trigger-type breakdown,
+  daily trend, and per-step-type failure rates. Supports optional `from` and `to`
+  query params (ISO dates; defaults to last 30 days). Requires the
+  `agent-analytics.view` permission.
+
+  Expected result:
+  - 200 with analytics data.
+  - 403 if the user lacks the `agent-analytics.view` permission.
+  - 404 if the agent doesn't belong to this workspace.
+}

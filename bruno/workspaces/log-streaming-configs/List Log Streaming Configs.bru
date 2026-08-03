@@ -1,0 +1,28 @@
+meta {
+  name: List Log Streaming Configs
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/log-streaming-configs
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists the workspace's log streaming configs, most recently created first. Requires
+  the `workspace.update` permission.
+
+  Expected result:
+  - 200 with an array of log streaming configs.
+  - 403 if the user lacks the `workspace.update` permission.
+}

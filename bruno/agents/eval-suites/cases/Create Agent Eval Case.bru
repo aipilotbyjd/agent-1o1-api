@@ -1,0 +1,47 @@
+meta {
+  name: Create Agent Eval Case
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/agents/:agent/eval-suites/:evalSuite/cases
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  agent: 1
+  evalSuite: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Refund Request",
+    "input": "I want a refund for my last payment.",
+    "assertions": [
+      {
+        "type": "contains",
+        "value": "refund"
+      }
+    ]
+  }
+}
+
+docs {
+  Adds a single test case to an eval suite. The case consists of an `input` prompt
+  and one or more `assertions` (each with a `type` like `contains`, `equals`,
+  `regex`, or `json_path`, and a `value`). Requires the `agent-eval.manage`
+  permission.
+
+  Expected result:
+  - 201 with the created case.
+  - 422 on validation errors.
+  - 403 if the user lacks the `agent-eval.manage` permission.
+  - 404 if the eval suite doesn't belong to this agent.
+}

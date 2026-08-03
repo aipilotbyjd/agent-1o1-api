@@ -1,0 +1,39 @@
+meta {
+  name: Update Folder
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/folders/:folder
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  folder: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "name": "Updated Campaigns",
+    "color": "#7c3aed",
+    "position": 2
+  }
+}
+
+docs {
+  Updates a folder's name, color, parent_id, and/or position. Requires the
+  `workflow.manage` permission.
+
+  Expected result:
+  - 200 with the updated folder.
+  - 422 on validation errors (e.g. parent_id pointing to itself).
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the folder doesn't belong to this workspace.
+}

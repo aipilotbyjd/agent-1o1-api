@@ -1,0 +1,29 @@
+meta {
+  name: List Connector Metrics
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/connector-metrics
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Lists daily connector usage metrics for the workspace, most recent first. Supports
+  optional `connector`, `from`, and `to` query filters. Requires the `run.view`
+  permission.
+
+  Expected result:
+  - 200 with an array of per-day connector metrics (calls, failures, duration).
+  - 403 if the user lacks the `run.view` permission.
+}

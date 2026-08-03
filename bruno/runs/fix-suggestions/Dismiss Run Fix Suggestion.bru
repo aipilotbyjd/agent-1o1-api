@@ -1,0 +1,31 @@
+meta {
+  name: Dismiss Run Fix Suggestion
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/runs/:run/fix-suggestions/:fixSuggestion/dismiss
+  body: none
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  run: 1
+  fixSuggestion: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  Dismisses a fix suggestion without applying it. Requires the `workflow.manage`
+  permission.
+
+  Expected result:
+  - 200 on success.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the suggestion doesn't belong to this run.
+}

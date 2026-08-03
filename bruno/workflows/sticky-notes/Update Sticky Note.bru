@@ -1,0 +1,40 @@
+meta {
+  name: Update Sticky Note
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/workflows/:workflow/sticky-notes/:stickyNote
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  workflow: 1
+  stickyNote: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "content": "Updated: Key is now rotated.",
+    "position_x": 150,
+    "position_y": 250
+  }
+}
+
+docs {
+  Updates a sticky note's content, color, position, width, height, and/or z_index.
+  Requires the `workflow.manage` permission.
+
+  Expected result:
+  - 200 with the updated sticky note.
+  - 422 on validation errors.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the sticky note doesn't belong to this workflow.
+}

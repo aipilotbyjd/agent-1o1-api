@@ -1,0 +1,39 @@
+meta {
+  name: Apply Run Fix Suggestion
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/workspaces/:workspace/runs/:run/fix-suggestions/:fixSuggestion/apply
+  body: json
+  auth: inherit
+}
+
+params:path {
+  workspace: 1
+  run: 1
+  fixSuggestion: 1
+}
+
+headers {
+  Accept: application/json
+}
+
+body:json {
+  {
+    "suggestion_index": 0
+  }
+}
+
+docs {
+  Applies a fix suggestion's `fix_config` to the workflow's draft step config and
+  marks the suggestion as applied. Only one fix can be applied per suggestion
+  (choose by `suggestion_index`). Requires the `workflow.manage` permission.
+
+  Expected result:
+  - 200 with the updated fix suggestion.
+  - 422 if the suggestion has no applicable fix or the step no longer exists.
+  - 403 if the user lacks the `workflow.manage` permission.
+  - 404 if the suggestion doesn't belong to this run.
+}
