@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Billing;
 
+use App\Enums\Notifications\NotificationEvent;
 use App\Models\Workspaces\Workspace;
 use App\Notifications\Workspace\WorkspaceEventNotification;
 
@@ -11,7 +12,7 @@ class TrialEndingNotification extends WorkspaceEventNotification
     {
         parent::__construct(
             workspace: $workspace,
-            eventKey: 'billing.trial_ending',
+            event: NotificationEvent::TrialEnding,
             title: "Your trial for {$workspace->name} ends in {$daysRemaining} day(s)",
             body: 'Add a payment method to keep your subscription active once the trial ends.',
         );

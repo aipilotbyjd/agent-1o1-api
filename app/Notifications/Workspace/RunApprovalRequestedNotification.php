@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Workspace;
 
+use App\Enums\Notifications\NotificationEvent;
 use App\Models\Runs\Run;
 use App\Models\Runs\RunStep;
 use App\Models\Workspaces\Workspace;
@@ -12,7 +13,7 @@ class RunApprovalRequestedNotification extends WorkspaceEventNotification
     {
         parent::__construct(
             workspace: $workspace,
-            eventKey: 'run.approval_requested',
+            event: NotificationEvent::RunApprovalRequested,
             title: "Approval needed in {$workspace->name}",
             body: $message,
             data: [

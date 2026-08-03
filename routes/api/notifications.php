@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Notifications\NotificationController;
+use App\Http\Controllers\Api\V1\Notifications\NotificationEventController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('notifications')->as('notifications.')->group(function (): void {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
+    Route::get('events', [NotificationEventController::class, 'index'])->name('events.index');
     Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
     Route::post('mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
     Route::post('{notification}/read', [NotificationController::class, 'markRead'])->name('read');

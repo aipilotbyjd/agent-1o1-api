@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Workspace;
 
+use App\Enums\Notifications\NotificationEvent;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
 
@@ -11,7 +12,7 @@ class MemberRemovedNotification extends WorkspaceEventNotification
     {
         parent::__construct(
             workspace: $workspace,
-            eventKey: 'workspace.member_removed',
+            event: NotificationEvent::MemberRemoved,
             title: "{$removedUser->name} was removed from {$workspace->name}",
             data: [
                 'user_id' => $removedUser->id,

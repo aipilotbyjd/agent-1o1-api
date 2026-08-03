@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Workspace;
 
+use App\Enums\Notifications\NotificationEvent;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceInvitation;
@@ -12,7 +13,7 @@ class MemberInvitedNotification extends WorkspaceEventNotification
     {
         parent::__construct(
             workspace: $workspace,
-            eventKey: 'workspace.member_invited',
+            event: NotificationEvent::MemberInvited,
             title: "{$inviter->name} invited {$invitation->email} to {$workspace->name}",
             data: [
                 'invitation_id' => $invitation->id,

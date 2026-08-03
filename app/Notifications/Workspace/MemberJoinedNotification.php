@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Workspace;
 
+use App\Enums\Notifications\NotificationEvent;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
 
@@ -11,7 +12,7 @@ class MemberJoinedNotification extends WorkspaceEventNotification
     {
         parent::__construct(
             workspace: $workspace,
-            eventKey: 'workspace.member_joined',
+            event: NotificationEvent::MemberJoined,
             title: "{$member->user->name} joined {$workspace->name}",
             data: [
                 'member_id' => $member->id,

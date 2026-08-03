@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Workspace;
 
+use App\Enums\Notifications\NotificationEvent;
 use App\Enums\Workspaces\Role;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
@@ -12,7 +13,7 @@ class MemberRoleChangedNotification extends WorkspaceEventNotification
     {
         parent::__construct(
             workspace: $workspace,
-            eventKey: 'workspace.member_role_changed',
+            event: NotificationEvent::MemberRoleChanged,
             title: "{$member->user->name}'s role changed from {$previousRole->value} to {$member->role->value} in {$workspace->name}",
             data: [
                 'member_id' => $member->id,
