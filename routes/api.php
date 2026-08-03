@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\Auth\User\UpdateUserController;
 use App\Http\Controllers\Api\V1\Auth\VerifyEmailController;
 use App\Http\Controllers\Api\V1\NotificationChannelController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Api\V1\NotificationEventController;
 use App\Http\Controllers\Api\V1\NotificationPreferenceController;
 use App\Http\Controllers\Api\V1\Workspaces\AcceptInvitationController;
 use App\Http\Controllers\Api\V1\Workspaces\WorkspaceController;
@@ -120,6 +121,7 @@ Route::prefix('v1')->as('v1.')->group(function (): void {
 
         Route::prefix('notifications')->as('notifications.')->group(function (): void {
             Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('events', [NotificationEventController::class, 'index'])->name('events.index');
             Route::get('unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
             Route::post('mark-all-read', [NotificationController::class, 'markAllRead'])->name('mark-all-read');
             Route::post('{notification}/read', [NotificationController::class, 'markRead'])->name('read');

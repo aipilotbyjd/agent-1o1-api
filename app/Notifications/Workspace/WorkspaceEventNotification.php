@@ -2,6 +2,7 @@
 
 namespace App\Notifications\Workspace;
 
+use App\Enums\NotificationEvent;
 use App\Models\NotificationPreference;
 use App\Models\Workspace;
 use App\Notifications\Channels\WorkspaceWebhookChannel;
@@ -21,7 +22,7 @@ abstract class WorkspaceEventNotification extends Notification implements Should
      */
     public function __construct(
         public readonly Workspace $workspace,
-        public readonly string $eventKey,
+        public readonly NotificationEvent $event,
         public readonly string $title,
         public readonly ?string $body = null,
         public readonly array $data = [],
@@ -32,20 +33,16 @@ abstract class WorkspaceEventNotification extends Notification implements Should
      */
     public function via(mixed $notifiable): array
     {
-        $preference = NotificationPreference::query()
-            ->where('workspace_id', $this->workspace->id)
-            ->where('user_id', $notifiable->id)
-            ->where('event_key', $this->eventKey)
-            ->first();
+        $preference = $this->preferenceFor($notifiable);
 
         $channels = [];
 
-        if ($preference?->in_app ?? true) {
+        if ($preference?->in_app ?? NotificationEvent::DEFAULT_IN_APP) {
             $channels[] = 'database';
             $channels[] = 'broadcast';
         }
 
-        if ($preference?->email ?? false) {
+        if ($preference?->email ?? NotificationEvent::DEFAULT_EMAIL) {
             $channels[] = 'mail';
         }
 
@@ -63,7 +60,7 @@ abstract class WorkspaceEventNotification extends Notification implements Should
     {
         return [
             'workspace_id' => $this->workspace->id,
-            'type' => $this->eventKey,
+            'type' => $this->event->value,
             'title' => $this->title,
             'body' => $this->body,
             'data' => $this->data,
@@ -74,7 +71,7 @@ abstract class WorkspaceEventNotification extends Notification implements Should
     {
         return new BroadcastMessage([
             'workspace_id' => $this->workspace->id,
-            'type' => $this->eventKey,
+            'type' => $this->event->value,
             'title' => $this->title,
             'body' => $this->body,
             'data' => $this->data,
@@ -104,16 +101,22 @@ abstract class WorkspaceEventNotification extends Notification implements Should
      */
     public function toWorkspaceChannel(mixed $notifiable): array
     {
-        $preference = NotificationPreference::query()
-            ->where('workspace_id', $this->workspace->id)
-            ->where('user_id', $notifiable->id)
-            ->where('event_key', $this->eventKey)
-            ->first();
-
         return [
             'workspace_id' => $this->workspace->id,
-            'channel_ids' => $preference?->channel_ids ?? [],
+            'channel_ids' => $this->preferenceFor($notifiable)?->channel_ids ?? [],
             'message' => $this->body ? "{$this->title}: {$this->body}" : $this->title,
         ];
+    }
+
+    /**
+     * The recipient's saved preference for this event, if they have one.
+     */
+    private function preferenceFor(mixed $notifiable): ?NotificationPreference
+    {
+        return NotificationPreference::query()
+            ->where('workspace_id', $this->workspace->id)
+            ->where('user_id', $notifiable->id)
+            ->where('event_key', $this->event->value)
+            ->first();
     }
 }
