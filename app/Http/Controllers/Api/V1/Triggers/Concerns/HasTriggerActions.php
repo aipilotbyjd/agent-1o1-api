@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Triggers\Concerns;
 
+use App\Enums\Triggers\TriggerEventStatus;
 use App\Enums\Workspaces\Permission;
 use App\Http\Requests\Api\V1\Triggers\StoreTriggerRequest;
 use App\Http\Requests\Api\V1\Triggers\UpdateTriggerRequest;
@@ -10,14 +11,13 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Triggers\Trigger;
 use App\Models\Workspaces\Workspace;
 use App\Services\Triggers\TriggerBuilder;
-use App\Services\Triggers\TriggerEventRecorder;
 use App\Services\Triggers\TriggerFiringService;
+use App\Services\Triggers\TriggerIntake;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
-use Throwable;
 
 trait HasTriggerActions
 {
@@ -64,12 +64,20 @@ trait HasTriggerActions
         return ApiResponse::success(null, 'Trigger deleted.');
     }
 
+    /**
+     * Queue a manual run of this trigger.
+     *
+     * The in-flight check stays synchronous here even though the automated paths
+     * have dropped it: a person clicking Run twice should be told the target is
+     * busy, where a provider redelivering a webhook should have its event queued
+     * rather than discarded. It is a UI affordance, not a durability mechanism.
+     */
     protected function runTrigger(
         Request $request,
         Workspace $workspace,
         Trigger $trigger,
         TriggerFiringService $firing,
-        TriggerEventRecorder $events,
+        TriggerIntake $intake,
     ): JsonResponse {
         $this->requirePermission(Permission::TriggerRun);
 
@@ -77,24 +85,16 @@ trait HasTriggerActions
             return ApiResponse::error('A run is already in progress for this trigger target.', Response::HTTP_CONFLICT);
         }
 
-        try {
-            $run = $firing->fire($trigger, ['triggered_by' => 'manual', 'user_id' => $request->user()->id], 'manual');
-        } catch (Throwable $e) {
-            $events->record($trigger, 'manual', false, error: $e->getMessage());
-            report($e);
+        $result = $intake->accept($trigger, 'manual', [
+            'triggered_by' => 'manual',
+            'user_id' => $request->user()->id,
+        ]);
 
-            return ApiResponse::error('This trigger failed to start a run.', Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
-
-        if ($run === null) {
-            $events->record($trigger, 'manual', false, error: 'Target not runnable');
-
+        if ($result->outcome === TriggerEventStatus::Skipped) {
             return ApiResponse::error('This trigger is not currently runnable.', Response::HTTP_CONFLICT);
         }
 
-        $events->record($trigger, 'manual', true, run: $run);
-
-        return ApiResponse::success(['run_id' => $run->id], 'Run started.', Response::HTTP_ACCEPTED);
+        return ApiResponse::success(['event_id' => $result->event->id], 'Run queued.', Response::HTTP_ACCEPTED);
     }
 
     protected function rotateTriggerToken(Request $request, Workspace $workspace, Trigger $trigger): JsonResponse

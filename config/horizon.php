@@ -210,6 +210,41 @@ return [
             'timeout' => 60,
             'nice' => 0,
         ],
+
+        // Trigger events for workflows. Separated from `default` so a backlog of
+        // application jobs cannot delay an inbound webhook's run, and vice versa.
+        'supervisor-triggers' => [
+            'connection' => 'redis',
+            'queue' => ['triggers'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 128,
+            'tries' => 1,
+            'timeout' => 120,
+            'nice' => 0,
+        ],
+
+        // Trigger events for agents. These block on a model call, so they get a
+        // long worker timeout and a lane of their own — one slow agent must not
+        // hold up every other trigger behind it.
+        'supervisor-triggers-agent' => [
+            'connection' => 'redis',
+            'queue' => ['triggers-agent'],
+            'balance' => 'auto',
+            'autoScalingStrategy' => 'time',
+            'maxProcesses' => 1,
+            'maxTime' => 0,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 1,
+            // Must exceed ProcessTriggerEvent::$timeout, or the worker kills the
+            // job before the job's own retry handling ever gets a say.
+            'timeout' => 360,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [
@@ -219,11 +254,31 @@ return [
                 'balanceMaxShift' => 1,
                 'balanceCooldown' => 3,
             ],
+
+            'supervisor-triggers' => [
+                'maxProcesses' => 10,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
+
+            'supervisor-triggers-agent' => [
+                'maxProcesses' => 5,
+                'balanceMaxShift' => 1,
+                'balanceCooldown' => 3,
+            ],
         ],
 
         'local' => [
             'supervisor-1' => [
                 'maxProcesses' => 3,
+            ],
+
+            'supervisor-triggers' => [
+                'maxProcesses' => 3,
+            ],
+
+            'supervisor-triggers-agent' => [
+                'maxProcesses' => 2,
             ],
         ],
     ],

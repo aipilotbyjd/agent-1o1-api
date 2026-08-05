@@ -7,8 +7,7 @@ use App\Models\Triggers\Trigger;
 use App\Models\Triggers\TriggerType;
 use App\Models\Workflows\Workflow;
 use App\Models\Workspaces\Workspace;
-use App\Services\Triggers\TriggerEventRecorder;
-use App\Services\Triggers\TriggerFiringService;
+use App\Services\Triggers\TriggerIntake;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
@@ -48,13 +47,13 @@ it('fires a run for each new item and stores the cursor', function () {
             ['id' => 3, 'title' => 'third'],
         ]]);
 
-    (new PollTrigger($trigger->id))->handle(app(TriggerFiringService::class), app(TriggerEventRecorder::class));
+    (new PollTrigger($trigger->id))->handle(app(TriggerIntake::class));
 
     Http::assertSent(fn ($request): bool => $request->hasHeader('Authorization', 'Bearer secret-token'));
     expect(Run::query()->count())->toBe(2)
         ->and($trigger->fresh()->poll_cursor)->toBe(['value' => 2]);
 
-    (new PollTrigger($trigger->id))->handle(app(TriggerFiringService::class), app(TriggerEventRecorder::class));
+    (new PollTrigger($trigger->id))->handle(app(TriggerIntake::class));
 
     expect(Run::query()->count())->toBe(3)
         ->and($trigger->fresh()->poll_cursor)->toBe(['value' => 3]);

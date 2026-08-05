@@ -5,6 +5,7 @@ use App\Enums\Runs\RunStatus;
 use App\Models\Agents\Agent;
 use App\Models\Runs\Run;
 use App\Models\Triggers\Trigger;
+use App\Models\Triggers\TriggerEvent;
 use App\Models\User;
 use App\Models\Workspaces\Workspace;
 use App\Models\Workspaces\WorkspaceMember;
@@ -45,7 +46,7 @@ it('runs an agent from a public webhook using the message template', function ()
 
     $response->assertStatus(202);
 
-    $run = Run::find($response->json('data.run_id'));
+    $run = TriggerEvent::find($response->json('data.event_id'))->run;
     expect($run->status)->toBe(RunStatus::Completed)
         ->and($run->trigger_type)->toBe('webhook')
         ->and($run->runnable_id)->toBe($agent->id)

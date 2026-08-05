@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Triggers\TriggerEventStatus;
 use App\Models\Runs\Run;
 use App\Models\Triggers\Trigger;
 use App\Models\Triggers\TriggerType;
@@ -54,7 +55,7 @@ it('rejects a github webhook with an invalid signature', function () {
 
     $response->assertStatus(401);
     expect(Run::query()->count())->toBe(0)
-        ->and($trigger->triggerEvents()->where('matched', false)->where('error', 'Invalid signature')->exists())->toBeTrue();
+        ->and($trigger->triggerEvents()->where('status', TriggerEventStatus::Rejected)->where('error', 'Invalid signature')->exists())->toBeTrue();
 });
 
 it('rejects a stripe webhook with an expired timestamp', function () {

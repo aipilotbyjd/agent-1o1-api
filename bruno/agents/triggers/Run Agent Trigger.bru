@@ -25,10 +25,10 @@ docs {
   `trigger.run` permission.
 
   Expected result:
-  - 202 with { run_id } once the run has started.
+  - 202 with { event_id } once the run has been queued. The run is started by a
+    queue worker, so poll the trigger's events endpoint for its status and run_id.
   - 409 if a run is already in progress for this trigger's target, or the target isn't
     currently runnable.
   - 403 if the user lacks the `trigger.run` permission.
   - 404 if the trigger doesn't belong to this agent.
-  - 500 if starting the run fails unexpectedly.
 }

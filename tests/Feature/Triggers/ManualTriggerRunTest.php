@@ -3,6 +3,7 @@
 use App\Enums\Runs\RunStatus;
 use App\Models\Runs\Run;
 use App\Models\Triggers\Trigger;
+use App\Models\Triggers\TriggerEvent;
 use App\Models\Triggers\TriggerType;
 use App\Models\User;
 use App\Models\Workflows\Workflow;
@@ -38,7 +39,7 @@ it('starts a run when a member fires a manual trigger', function () {
 
     $response->assertStatus(202);
 
-    $run = Run::find($response->json('data.run_id'));
+    $run = TriggerEvent::find($response->json('data.event_id'))->run;
     expect($run->status)->toBe(RunStatus::Completed)
         ->and($run->trigger_type)->toBe('manual');
 });

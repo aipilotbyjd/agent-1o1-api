@@ -3,6 +3,7 @@
 use App\Enums\Runs\RunStatus;
 use App\Models\Runs\Run;
 use App\Models\Triggers\Trigger;
+use App\Models\Triggers\TriggerEvent;
 use App\Models\User;
 use App\Models\Workflows\Workflow;
 use App\Models\Workspaces\Workspace;
@@ -71,7 +72,7 @@ it('starts a workflow run from a public webhook call', function () {
 
     $response->assertStatus(202);
 
-    $run = Run::find($response->json('data.run_id'));
+    $run = TriggerEvent::find($response->json('data.event_id'))->run;
     expect($run->status)->toBe(RunStatus::Completed)
         ->and($run->trigger_type)->toBe('webhook')
         ->and($run->input)->toBe(['order' => 'ORD-9'])

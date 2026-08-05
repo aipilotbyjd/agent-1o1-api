@@ -3,6 +3,7 @@
 namespace App\Services\Triggers;
 
 use App\Enums\Runs\RunStatus;
+use App\Jobs\Triggers\ProcessTriggerEvent;
 use App\Models\Agents\Agent;
 use App\Models\Runs\Run;
 use App\Models\Triggers\Trigger;
@@ -11,7 +12,6 @@ use App\Models\Workflows\Workflow;
 use App\Services\Agents\AgentChatService;
 use App\Services\Workflows\WorkflowRunner;
 use Illuminate\Http\Request;
-use Throwable;
 
 class TriggerFiringService
 {
@@ -24,9 +24,11 @@ class TriggerFiringService
      * Fire a trigger against its workflow or agent. Returns null when the
      * target is not currently runnable (draft, deleted, or unknown type).
      *
-     * Exceptions raised by the underlying runner are recorded against the
-     * trigger's failure streak and rethrown — callers own the HTTP/event
-     * response since only they know the right status and event source.
+     * Exceptions are left to propagate untouched. Counting them against the
+     * trigger's failure streak here would mean a single flaky event could trip
+     * the circuit breaker across its own retries, so the streak is advanced by
+     * whoever owns the decision that an event is finally, permanently failed —
+     * {@see ProcessTriggerEvent::failed()}.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -34,23 +36,41 @@ class TriggerFiringService
     {
         $target = $trigger->triggerable;
 
-        try {
-            $run = match (true) {
-                $target instanceof Workflow && $target->status === 'published' && ! $target->trashed() => $this->workflows->start($target, null, $payload, $triggerType),
-                $target instanceof Agent && ! $target->trashed() => $this->agents->sendFromTrigger($target, $payload, $triggerType, $trigger->config['message'] ?? null),
-                default => null,
-            };
-        } catch (Throwable $e) {
-            $trigger->registerFailure();
-
-            throw $e;
-        }
+        $run = match (true) {
+            $this->isRunnableWorkflow($target) => $this->workflows->start($target, null, $payload, $triggerType),
+            $this->isRunnableAgent($target) => $this->agents->sendFromTrigger($target, $payload, $triggerType, $trigger->config['message'] ?? null),
+            default => null,
+        };
 
         if ($run !== null) {
             $trigger->update(['last_run_at' => now(), 'consecutive_failure_count' => 0]);
         }
 
         return $run;
+    }
+
+    /**
+     * Whether firing this trigger right now would produce a run.
+     *
+     * Checked at intake so a trigger pointing at a draft or deleted target fails
+     * immediately instead of occupying the queue — the answer cannot change by
+     * retrying, so there is nothing to gain from accepting the event.
+     */
+    public function isRunnable(Trigger $trigger): bool
+    {
+        $target = $trigger->triggerable;
+
+        return $this->isRunnableWorkflow($target) || $this->isRunnableAgent($target);
+    }
+
+    private function isRunnableWorkflow(mixed $target): bool
+    {
+        return $target instanceof Workflow && $target->status === 'published' && ! $target->trashed();
+    }
+
+    private function isRunnableAgent(mixed $target): bool
+    {
+        return $target instanceof Agent && ! $target->trashed();
     }
 
     /**
@@ -112,20 +132,22 @@ class TriggerFiringService
     }
 
     /**
-     * Whether a delivery with this id has already been successfully fired
-     * for this trigger — a retried provider delivery, not a new event.
+     * The event already stored for this delivery id, if any.
+     *
+     * A fast path only — the unique index on (trigger_id, delivery_id) is what
+     * actually guarantees dedupe, since two concurrent deliveries can both pass
+     * this check before either has written its row.
      */
-    public function isDuplicateDelivery(Trigger $trigger, ?string $deliveryId): bool
+    public function existingDelivery(Trigger $trigger, ?string $deliveryId): ?TriggerEvent
     {
         if ($deliveryId === null) {
-            return false;
+            return null;
         }
 
         return TriggerEvent::query()
             ->where('trigger_id', $trigger->id)
             ->where('delivery_id', $deliveryId)
-            ->where('matched', true)
-            ->exists();
+            ->first();
     }
 
     /**

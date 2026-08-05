@@ -10,8 +10,8 @@ use App\Models\Agents\Agent;
 use App\Models\Triggers\Trigger;
 use App\Models\Workspaces\Workspace;
 use App\Services\Triggers\TriggerBuilder;
-use App\Services\Triggers\TriggerEventRecorder;
 use App\Services\Triggers\TriggerFiringService;
+use App\Services\Triggers\TriggerIntake;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -55,12 +55,12 @@ class AgentTriggerController extends Controller
         Agent $agent,
         Trigger $trigger,
         TriggerFiringService $firing,
-        TriggerEventRecorder $events,
+        TriggerIntake $intake,
     ): JsonResponse {
         $this->ensureBelongsToWorkspace($workspace, $agent);
         $this->ensureTriggerBelongsToParent($trigger, $agent);
 
-        return $this->runTrigger($request, $workspace, $trigger, $firing, $events);
+        return $this->runTrigger($request, $workspace, $trigger, $firing, $intake);
     }
 
     public function rotateToken(Request $request, Workspace $workspace, Agent $agent, Trigger $trigger): JsonResponse

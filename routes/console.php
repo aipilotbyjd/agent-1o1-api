@@ -10,6 +10,11 @@ Artisan::command('inspire', function () {
 
 Schedule::command('triggers:fire-due-schedule')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('triggers:queue-due-polling')->everyMinute()->withoutOverlapping()->onOneServer();
+
+// The backstop for events whose job never completed. Runs often enough that a
+// lost event is recovered in minutes, and is a no-op when nothing is stranded.
+Schedule::command('triggers:reconcile')->everyFiveMinutes()->withoutOverlapping()->onOneServer();
+
 Schedule::command('workflows:expire-waiting-callbacks')->everyMinute()->withoutOverlapping()->onOneServer();
 Schedule::command('billing:rollover-credits')->daily()->withoutOverlapping()->onOneServer();
 Schedule::command('billing:notify-trial-ending')->daily()->withoutOverlapping()->onOneServer();

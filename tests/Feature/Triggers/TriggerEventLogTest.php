@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\Triggers\TriggerEventStatus;
 use App\Models\Triggers\Trigger;
 use App\Models\Triggers\TriggerEvent;
 use App\Models\User;
@@ -25,7 +26,7 @@ it('records a matched trigger event when a webhook fires a run', function () {
 
     $this->postJson("/api/v1/hooks/{$trigger->token}", ['a' => 1])->assertStatus(202);
 
-    expect(TriggerEvent::query()->where('trigger_id', $trigger->id)->where('matched', true)->exists())->toBeTrue();
+    expect(TriggerEvent::query()->where('trigger_id', $trigger->id)->where('status', TriggerEventStatus::Matched)->exists())->toBeTrue();
 });
 
 it('records an unmatched trigger event when filters reject the payload', function () {
@@ -38,7 +39,7 @@ it('records an unmatched trigger event when filters reject the payload', functio
 
     $this->postJson("/api/v1/hooks/{$trigger->token}", ['x' => 'nope'])->assertOk();
 
-    expect(TriggerEvent::query()->where('trigger_id', $trigger->id)->where('matched', false)->exists())->toBeTrue();
+    expect(TriggerEvent::query()->where('trigger_id', $trigger->id)->where('status', TriggerEventStatus::Filtered)->exists())->toBeTrue();
 });
 
 it('lists paginated trigger events for a workflow trigger', function () {
