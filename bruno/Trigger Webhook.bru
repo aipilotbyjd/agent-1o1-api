@@ -27,17 +27,23 @@ body:json {
 
 docs {
   Public route authenticated by the trigger's own secret `token`, not by a bearer
-  token. Fires the webhook trigger matching `token` and starts a run if the payload
-  passes the trigger's filters. The request body is NOT a fixed shape — it is
-  whatever the trigger's source system (Stripe, Slack, a custom integration, etc.)
-  sends; the JSON above is only a generic placeholder. Some trigger types also
-  require a signature header, verified against the trigger's configured secret.
+  token. The request body is NOT a fixed shape — it is whatever the trigger's
+  source system (Stripe, Slack, a custom integration, etc.) sends; the JSON above
+  is only a generic placeholder. Some trigger types also require a signature
+  header, verified against the trigger's configured secret.
+
+  This endpoint accepts the event and returns — it does not wait for the run. The
+  event is stored durably first, then processed on a queue with retries, so the
+  response time does not depend on how long the workflow or agent takes.
 
   Expected result:
-  - 202 with { run_id } if a run was started.
+  - 202 with { event_id } if the event was accepted and queued.
   - 200 with a message if the delivery was a duplicate or was filtered out.
   - 401 if the webhook signature is invalid.
   - 404 if no active webhook trigger matches the token.
-  - 409 if a run is already in progress for this trigger's target.
-  - 500 if the trigger failed to start a run.
+  - 409 if the trigger's target is a draft or has been deleted.
+
+  To follow what became of an accepted event, poll the trigger's events endpoint:
+  the event carries a `status` (pending → processing → matched / filtered /
+  skipped / failed) and, once matched, the `run_id` it started.
 }
